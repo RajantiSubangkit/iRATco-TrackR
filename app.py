@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import tempfile
 
+st.title("iRATco TrackR")
+
 uploaded_video = st.file_uploader("Upload Rodent Video (mp4)")
 
 
