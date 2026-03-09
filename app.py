@@ -282,7 +282,7 @@ if uploaded_video:
         with zipfile.ZipFile(zip_buffer, "w") as zip_file:
 
             for filename, data in saved_plots:
-            zip_file.writestr(filename, data)
+                zip_file.writestr(filename, data)
 
         st.download_button(
             label="Download all plots",
