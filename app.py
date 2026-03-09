@@ -68,7 +68,10 @@ if uploaded_video:
         bearing_plot = dir_col1.empty()
         turn_plot = dir_col2.empty()
 
-        metric1,metric2 = st.columns(2)
+        # metric placeholders (PERBAIKAN UTAMA)
+        metric_col1,metric_col2 = st.columns(2)
+        mean_vel_display = metric_col1.empty()
+        dist60_display = metric_col2.empty()
 
         frame_id = 0
 
@@ -225,9 +228,9 @@ if uploaded_video:
                     plt.close(fig6)
 
 
-                    # metrics
-                    metric1.metric("Mean velocity", f"{mean_velocity:.2f}")
-                    metric2.metric("Distance first 60 s", f"{distance_60s:.2f}")
+                    # update metrics (TIDAK MENUMPUK LAGI)
+                    mean_vel_display.metric("Mean velocity", f"{mean_velocity:.2f}")
+                    dist60_display.metric("Distance first 60 s", f"{distance_60s:.2f}")
 
             frame_id += 1
 
@@ -247,17 +250,17 @@ if uploaded_video:
             "tracking.csv"
         )
 
+
+# footer
 st.markdown("---")
 
-st.markdown(
-"""
+st.markdown("""
 © 2026 Mawar Subangkit  
 Mouse Tracking Analysis Software  
 
 If you use this software, please cite:
 
-Subangkit, MAWAR (2026).  
+Subangkit, Mawar (2026).  
 **IRATCO TrackR: Open-field Behavioral Tracking Software.**  
-Available at: https://iratcotrackr.streamlit.app/
-"""
-)
+https://iratcotrackr.streamlit.app/
+""")
