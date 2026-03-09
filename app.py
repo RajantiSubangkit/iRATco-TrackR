@@ -8,7 +8,7 @@ import tempfile
 
 st.title("iRATco TrackR")
 
-uploaded_video = st.file_uploader("Upload Rodent Video (mp4)")
+uploaded_video = st.file_uploader("Upload mouse video")
 
 
 # -------------------------------------------------
@@ -37,7 +37,7 @@ def detect_mouse(frame):
 
 if uploaded_video:
 
-    if st.button("Run Analysis"):
+    if st.button("Run analysis"):
 
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.write(uploaded_video.read())
@@ -46,6 +46,7 @@ if uploaded_video:
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
 
         X=[]
         Y=[]
@@ -61,6 +62,13 @@ if uploaded_video:
         vel_plot = col3.empty()
 
         heat_plot = st.empty()
+
+        dir_col1,dir_col2 = st.columns(2)
+
+        bearing_plot = dir_col1.empty()
+        turn_plot = dir_col2.empty()
+
+        metric1,metric2 = st.columns(2)
 
         frame_id = 0
 
@@ -83,16 +91,10 @@ if uploaded_video:
 
             track = pd.DataFrame({"X":X,"Y":Y})
 
-            # -------------------------------------------------
-            # Mirror vertical coordinate
-            # -------------------------------------------------
-
+            # mirror vertical
             track["Y"] = height - track["Y"]
 
-            # -------------------------------------------------
-            # Smoothing trajectory
-            # -------------------------------------------------
-
+            # smoothing
             track["Xs"] = track["X"].rolling(5,center=True).mean()
             track["Ys"] = track["Y"].rolling(5,center=True).mean()
 
@@ -118,61 +120,53 @@ if uploaded_video:
 
                 track["turn_angle"] = (track["turn_angle"] + 180) % 360 - 180
 
+                mean_velocity = track["velocity"].mean()
 
-                # update plot tiap 10 frame agar cepat
+                frames_60s = int(fps*60)
+
+                if len(track)>frames_60s:
+                    distance_60s = track["cumulative_distance"].iloc[frames_60s]
+                else:
+                    distance_60s = track["cumulative_distance"].iloc[-1]
+
+
+                # update plot tiap 10 frame
                 if frame_id % 10 == 0:
 
-                    # ----------------------------------
-                    # Trajectory
-                    # ----------------------------------
-
+                    # trajectory
                     fig1,ax1 = plt.subplots()
-
                     ax1.plot(track.Xs,track.Ys,color="red")
-
                     ax1.set_aspect("equal")
-
                     ax1.set_title("Trajectory")
-
                     traj_plot.pyplot(fig1)
-
                     plt.close(fig1)
 
 
-                    # ----------------------------------
-                    # Cumulative distance
-                    # ----------------------------------
-
+                    # cumulative distance
                     fig2,ax2 = plt.subplots()
-
                     ax2.plot(track["cumulative_distance"],color="steelblue")
-
                     ax2.set_title("Cumulative distance")
-
                     dist_plot.pyplot(fig2)
-
                     plt.close(fig2)
 
 
-                    # ----------------------------------
-                    # Velocity
-                    # ----------------------------------
-
+                    # velocity
                     fig3,ax3 = plt.subplots()
-
                     ax3.plot(track["velocity"],color="purple")
 
+                    ax3.axhline(mean_velocity,
+                                color="black",
+                                linestyle="--",
+                                label=f"Mean {mean_velocity:.2f}")
+
+                    ax3.legend()
                     ax3.set_title("Velocity")
 
                     vel_plot.pyplot(fig3)
-
                     plt.close(fig3)
 
 
-                    # ----------------------------------
-                    # Heatmap
-                    # ----------------------------------
-
+                    # heatmap
                     if len(track)>20:
 
                         fig4,ax4 = plt.subplots()
@@ -191,69 +185,60 @@ if uploaded_video:
 
                         plt.close(fig4)
 
+
+                    # directional analysis
+                    bins = np.linspace(-180,180,24)
+
+                    fig5 = plt.figure(figsize=(4,4))
+
+                    hist,_ = np.histogram(track["bearing_deg"].dropna(), bins=bins)
+
+                    theta = np.deg2rad((bins[:-1]+bins[1:])/2)
+
+                    ax5 = fig5.add_subplot(111, polar=True)
+
+                    ax5.bar(theta,hist,width=np.deg2rad(15),
+                            color="steelblue")
+
+                    ax5.set_title("Absolute bearing")
+
+                    bearing_plot.pyplot(fig5)
+
+                    plt.close(fig5)
+
+
+                    fig6 = plt.figure(figsize=(4,4))
+
+                    hist,_ = np.histogram(track["turn_angle"].dropna(), bins=bins)
+
+                    theta = np.deg2rad((bins[:-1]+bins[1:])/2)
+
+                    ax6 = fig6.add_subplot(111, polar=True)
+
+                    ax6.bar(theta,hist,width=np.deg2rad(15),
+                            color="tomato")
+
+                    ax6.set_title("Turn direction")
+
+                    turn_plot.pyplot(fig6)
+
+                    plt.close(fig6)
+
+
+                    # metrics
+                    metric1.metric("Mean velocity", f"{mean_velocity:.2f}")
+                    metric2.metric("Distance first 60 s", f"{distance_60s:.2f}")
+
             frame_id += 1
 
             progress.progress(frame_id/total_frames)
 
         cap.release()
 
-        st.success("Analysis Complete")
+        st.success("Analysis complete")
 
 
-        # -------------------------------------------------
-        # Directional analysis
-        # -------------------------------------------------
-
-        st.subheader("Directional Analysis")
-
-        col4,col5 = st.columns(2)
-
-        bins = np.linspace(-180,180,24)
-
-        # Absolute bearing
-
-        with col4:
-
-            fig5 = plt.figure(figsize=(4,4))
-
-            hist,_ = np.histogram(track["bearing_deg"].dropna(), bins=bins)
-
-            theta = np.deg2rad((bins[:-1]+bins[1:])/2)
-
-            ax5 = fig5.add_subplot(111, polar=True)
-
-            ax5.bar(theta,hist,width=np.deg2rad(15),
-                    color="steelblue")
-
-            ax5.set_title("Absolute bearing")
-
-            st.pyplot(fig5)
-
-
-        # Turn direction
-
-        with col5:
-
-            fig6 = plt.figure(figsize=(4,4))
-
-            hist,_ = np.histogram(track["turn_angle"].dropna(), bins=bins)
-
-            theta = np.deg2rad((bins[:-1]+bins[1:])/2)
-
-            ax6 = fig6.add_subplot(111, polar=True)
-
-            ax6.bar(theta,hist,width=np.deg2rad(15),
-                    color="tomato")
-
-            ax6.set_title("Turn direction")
-
-            st.pyplot(fig6)
-
-
-        # -------------------------------------------------
-        # Download CSV
-        # -------------------------------------------------
-
+        # download csv
         csv = track.to_csv(index=False)
 
         st.download_button(
@@ -262,17 +247,14 @@ if uploaded_video:
             "tracking.csv"
         )
 
-st.markdown("---")
+    st.markdown("---")
 
-st.markdown(
-"""
-© 2026 Mawar Subangkit  
-Mouse Tracking Analysis Software  
+    st.markdown("""
+    © 2026 Mawar Subangkit  
+    Mouse Tracking Analysis Software  
 
-If you use this software, please cite:
+    If you use this software, please cite:
 
-Subangkit, Mawar (2026).  
-**iRATco TrackR: Open-field Behavioral Tracking Software.**  
-Available at: https://iratcotrackr.streamlit.app/
-"""
-)
+    Subangkit M. (2026).  
+    **IRATCO TrackR: Open-field behavioral tracking software.**
+    """)
