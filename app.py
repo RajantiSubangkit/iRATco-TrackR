@@ -6,9 +6,22 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import tempfile
 
-st.title("Subangkit TrackR")
+st.title("iRATco TrackR")
+st.markdown("---")
 
-uploaded_video = st.file_uploader("Upload mouse video")
+st.markdown(
+"""
+© 2026 Mawar Subangkit  
+Mouse Tracking Analysis Software  
+
+If you use this software, please cite:
+
+Subangkit M. (2026).  
+**IRATCO TrackR: Open-field behavioral tracking software.**  
+Available at: https://github.com/username/repository
+"""
+)
+uploaded_video = st.file_uploader("Upload Rodent Video (mp4)")
 
 
 # -------------------------------------------------
@@ -37,7 +50,7 @@ def detect_mouse(frame):
 
 if uploaded_video:
 
-    if st.button("Run analysis"):
+    if st.button("Run Analysis"):
 
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.write(uploaded_video.read())
@@ -197,14 +210,14 @@ if uploaded_video:
 
         cap.release()
 
-        st.success("Analysis complete")
+        st.success("Analysis Complete")
 
 
         # -------------------------------------------------
         # Directional analysis
         # -------------------------------------------------
 
-        st.subheader("Directional analysis")
+        st.subheader("Directional Analysis")
 
         col4,col5 = st.columns(2)
 
