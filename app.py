@@ -5,15 +5,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tempfile
+import zipfile
+import io
 
 st.set_page_config(layout="wide")
 
 st.title("iRATco TrackR")
 
-uploaded_video = st.file_uploader("Upload mouse video")
+uploaded_video = st.file_uploader("Upload your video")
 
 analysis_speed = st.selectbox(
-    "Analysis speed",
+    "Analysis Speed",
     ["1X","2X","4X","8X","20X"]
 )
 
@@ -88,6 +90,7 @@ if uploaded_video:
         exploration_display=metric_col4.empty()
 
         frame_id=0
+        saved_plots = []
 
         while True:
 
@@ -179,6 +182,9 @@ if uploaded_video:
                     ax1.set_aspect("equal")
                     ax1.set_title("Trajectory")
                     traj_plot.pyplot(fig1)
+                    buf = io.BytesIO()
+                    fig1.savefig(buf, format="png")
+                    saved_plots.append(("trajectory.png", buf.getvalue()))
                     plt.close(fig1)
 
                     fig2,ax2=plt.subplots()
@@ -208,7 +214,9 @@ if uploaded_video:
                         ax4.set_aspect("equal")
 
                         heat_plot.pyplot(fig4)
-
+                        buf = io.BytesIO()
+                        fig4.savefig(buf, format="png")
+                        saved_plots.append(("heatmap.png", buf.getvalue()))
                         plt.close(fig4)
 
                     # directional analysis
@@ -265,6 +273,23 @@ if uploaded_video:
         cap.release()
 
         st.success("Analysis complete")
+        # ---------------------------------
+        # Download all plots
+        # ---------------------------------
+
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+
+            for filename, data in saved_plots:
+            zip_file.writestr(filename, data)
+
+        st.download_button(
+            label="Download all plots",
+            data=zip_buffer.getvalue(),
+            file_name="iratco_plots.zip",
+            mime="application/zip"
+            )
 
         csv=track.to_csv(index=False)
 
@@ -279,8 +304,9 @@ st.markdown("---")
 
 st.markdown("""
 © 2026 Mawar Subangkit  
-Mouse Behavioral Tracking Software
+**Mouse Behavioral Tracking Software**
 
 **Subangkit**, MAWAR (2026)  
 **IRATCO TrackR: Open-field Behavioral Tracking Software**
+
 Available at: https://iratcotrackr.streamlit.app/""")
