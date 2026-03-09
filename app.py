@@ -48,7 +48,7 @@ def detect_mouse(frame):
 
 if uploaded_video:
 
-    if st.button("Run analysis"):
+    if st.button("Run Analysis"):
 
         tfile=tempfile.NamedTemporaryFile(delete=False)
         tfile.write(uploaded_video.read())
@@ -180,7 +180,7 @@ if uploaded_video:
                     fig1,ax1=plt.subplots()
                     ax1.plot(track.Xs,track.Ys,color="red")
                     ax1.set_aspect("equal")
-                    ax1.set_title("Trajectory")
+                    ax1.set_title("Movement Trajectory")
                     traj_plot.pyplot(fig1)
                     buf = io.BytesIO()
                     fig1.savefig(buf, format="png")
@@ -189,7 +189,7 @@ if uploaded_video:
 
                     fig2,ax2=plt.subplots()
                     ax2.plot(track["cumulative_distance"])
-                    ax2.set_title("Cumulative distance")
+                    ax2.set_title("Cumulative Distance")
                     dist_plot.pyplot(fig2)
                     plt.close(fig2)
 
@@ -212,7 +212,7 @@ if uploaded_video:
                         )
 
                         ax4.set_aspect("equal")
-
+                        st.subheader("Dwell Time Heatmap")
                         heat_plot.pyplot(fig4)
                         buf = io.BytesIO()
                         fig4.savefig(buf, format="png")
