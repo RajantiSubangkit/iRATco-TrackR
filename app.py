@@ -10,9 +10,7 @@ st.set_page_config(layout="wide")
 
 st.title("iRATco TrackR")
 
-
-uploaded_video = st.file_uploader("Upload your video")
-
+uploaded_video = st.file_uploader("Upload mouse video")
 
 analysis_speed = st.selectbox(
     "Analysis speed",
@@ -82,6 +80,11 @@ if uploaded_video:
         vel_plot=col3.empty()
 
         heat_plot=st.empty()
+
+        dir_col1,dir_col2=st.columns(2)
+
+        bearing_plot=dir_col1.empty()
+        turn_plot=dir_col2.empty()
 
         zone_plot=st.empty()
 
@@ -198,9 +201,7 @@ if uploaded_video:
 
                     ax3.plot(track["velocity"],color="purple")
 
-                    ax3.axhline(mean_velocity,
-                                color="black",
-                                linestyle="--")
+                    ax3.axhline(mean_velocity,color="black",linestyle="--")
 
                     ax3.set_title("Velocity")
 
@@ -208,6 +209,7 @@ if uploaded_video:
                     plt.close(fig3)
 
 
+                    # Heatmap
                     if len(track)>20:
 
                         fig4,ax4=plt.subplots()
@@ -227,26 +229,64 @@ if uploaded_video:
                         plt.close(fig4)
 
 
-                    # zone plot
+                    # -----------------------
+                    # Directional Analysis
+                    # -----------------------
 
-                    fig5,ax5=plt.subplots()
+                    bins=np.linspace(-180,180,24)
 
-                    zone_counts=track.zone.value_counts()
+                    fig5=plt.figure(figsize=(4,4))
 
-                    ax5.bar(zone_counts.index,zone_counts.values)
+                    hist,_=np.histogram(track["bearing_deg"].dropna(),bins=bins)
 
-                    ax5.set_title("Zone occupancy")
+                    theta=np.deg2rad((bins[:-1]+bins[1:])/2)
 
-                    zone_plot.pyplot(fig5)
+                    ax5=fig5.add_subplot(111,polar=True)
+
+                    ax5.bar(theta,hist,width=np.deg2rad(15),color="steelblue")
+
+                    ax5.set_title("Absolute bearing")
+
+                    bearing_plot.pyplot(fig5)
 
                     plt.close(fig5)
 
 
+                    fig6=plt.figure(figsize=(4,4))
+
+                    hist,_=np.histogram(track["turn_angle"].dropna(),bins=bins)
+
+                    theta=np.deg2rad((bins[:-1]+bins[1:])/2)
+
+                    ax6=fig6.add_subplot(111,polar=True)
+
+                    ax6.bar(theta,hist,width=np.deg2rad(15),color="tomato")
+
+                    ax6.set_title("Turn direction")
+
+                    turn_plot.pyplot(fig6)
+
+                    plt.close(fig6)
+
+
+                    # Zone occupancy
+                    fig7,ax7=plt.subplots()
+
+                    zone_counts=track.zone.value_counts()
+
+                    ax7.bar(zone_counts.index,zone_counts.values)
+
+                    ax7.set_title("Zone occupancy")
+
+                    zone_plot.pyplot(fig7)
+
+                    plt.close(fig7)
+
+
                     mean_vel_display.metric("Mean velocity",f"{mean_velocity:.2f}")
-
                     dist60_display.metric("Distance first 60s",f"{distance_60s:.2f}")
-
                     anxiety_display.metric("Anxiety index",f"{anxiety_index:.2f}")
+
 
             frame_id+=1
 
@@ -256,7 +296,6 @@ if uploaded_video:
 
         st.success("Analysis complete")
 
-
         csv=track.to_csv(index=False)
 
         st.download_button(
@@ -265,8 +304,6 @@ if uploaded_video:
             "tracking.csv"
         )
 
-
-# footer
 
 st.markdown("---")
 
