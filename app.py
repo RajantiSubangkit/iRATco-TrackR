@@ -247,14 +247,14 @@ if uploaded_video:
             "tracking.csv"
         )
 
-    st.markdown("---")
+st.markdown("---")
 
-    st.markdown("""
-    © 2026 Mawar Subangkit  
-    Mouse Tracking Analysis Software  
+st.markdown("""
+© 2026 Mawar Subangkit  
+Mouse Tracking Analysis Software  
 
-    If you use this software, please cite:
+If you use this software, please cite:
 
-    Subangkit M. (2026).  
-    **IRATCO TrackR: Open-field behavioral tracking software.**
-    """)
+Subangkit M. (2026).  
+**IRATCO TrackR: Open-field behavioral tracking software.**
+""")
