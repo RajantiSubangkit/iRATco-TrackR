@@ -255,6 +255,7 @@ Mouse Tracking Analysis Software
 
 If you use this software, please cite:
 
-Subangkit M. (2026).  
+Subangkit, MAWAR (2026).  
 **IRATCO TrackR: Open-field behavioral tracking software.**
+Available at: https://iratcotrackr.streamlit.app/
 """)
