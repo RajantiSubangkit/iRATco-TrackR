@@ -11,7 +11,7 @@ st.set_page_config(layout="wide")
 st.title("iRATco TrackR")
 
 
-uploaded_video = st.file_uploader("Upload mouse video")
+uploaded_video = st.file_uploader("Upload your video")
 
 
 analysis_speed = st.selectbox(
