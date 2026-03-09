@@ -6,21 +6,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import tempfile
 
-st.title("iRATco TrackR")
-st.markdown("---")
-
-st.markdown(
-"""
-© 2026 Mawar Subangkit  
-Mouse Tracking Analysis Software  
-
-If you use this software, please cite:
-
-Subangkit, Mawar (2026).  
-**iRATco TrackR: Open-field Behavioral Tracking Software.**  
-Available at: https://iratcotrackr.streamlit.app/
-"""
-)
 uploaded_video = st.file_uploader("Upload Rodent Video (mp4)")
 
 
@@ -274,3 +259,18 @@ if uploaded_video:
             csv,
             "tracking.csv"
         )
+
+st.markdown("---")
+
+st.markdown(
+"""
+© 2026 Mawar Subangkit  
+Mouse Tracking Analysis Software  
+
+If you use this software, please cite:
+
+Subangkit, Mawar (2026).  
+**iRATco TrackR: Open-field Behavioral Tracking Software.**  
+Available at: https://iratcotrackr.streamlit.app/
+"""
+)
