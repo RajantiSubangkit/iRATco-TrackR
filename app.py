@@ -262,5 +262,5 @@ If you use this software, please cite:
 
 Subangkit, Mawar (2026).  
 **IRATCO TrackR: Open-field Behavioral Tracking Software.**  
-https://iratcotrackr.streamlit.app/
+Available at: **https://iratcotrackr.streamlit.app/**
 """)
