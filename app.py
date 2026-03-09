@@ -249,13 +249,15 @@ if uploaded_video:
 
 st.markdown("---")
 
-st.markdown("""
+st.markdown(
+"""
 © 2026 Mawar Subangkit  
 Mouse Tracking Analysis Software  
 
 If you use this software, please cite:
 
 Subangkit, MAWAR (2026).  
-**IRATCO TrackR: Open-field behavioral tracking software.**
+**IRATCO TrackR: Open-field Behavioral Tracking Software.**  
 Available at: https://iratcotrackr.streamlit.app/
-""")
+"""
+)
