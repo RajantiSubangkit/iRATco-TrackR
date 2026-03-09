@@ -5,10 +5,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tempfile
+import zipfile
+import os
 
 st.set_page_config(layout="wide")
 
 st.title("iRATco TrackR")
+
 
 uploaded_video = st.file_uploader("Upload mouse video")
 
@@ -56,6 +59,8 @@ if uploaded_video:
 
     if st.button("Run analysis"):
 
+        os.makedirs("outputs",exist_ok=True)
+
         tfile=tempfile.NamedTemporaryFile(delete=False)
         tfile.write(uploaded_video.read())
 
@@ -70,29 +75,7 @@ if uploaded_video:
         Y=[]
 
         frame_window=st.empty()
-
         progress=st.progress(0)
-
-        col1,col2,col3=st.columns(3)
-
-        traj_plot=col1.empty()
-        dist_plot=col2.empty()
-        vel_plot=col3.empty()
-
-        heat_plot=st.empty()
-
-        dir_col1,dir_col2=st.columns(2)
-
-        bearing_plot=dir_col1.empty()
-        turn_plot=dir_col2.empty()
-
-        zone_plot=st.empty()
-
-        metric_col1,metric_col2,metric_col3=st.columns(3)
-
-        mean_vel_display=metric_col1.empty()
-        dist60_display=metric_col2.empty()
-        anxiety_display=metric_col3.empty()
 
         frame_id=0
 
@@ -112,208 +95,276 @@ if uploaded_video:
             X.append(x)
             Y.append(y)
 
-            if x is not None:
-                cv2.circle(frame,(x,y),6,(0,0,255),-1)
-
-            frame_window.image(frame,channels="BGR")
-
-            track=pd.DataFrame({"X":X,"Y":Y})
-
-            track["Y"]=height-track["Y"]
-
-            track["Xs"]=track["X"].rolling(5,center=True).mean()
-            track["Ys"]=track["Y"].rolling(5,center=True).mean()
-
-            track["Xs"].fillna(track["X"],inplace=True)
-            track["Ys"].fillna(track["Y"],inplace=True)
-
-            if len(track)>2:
-
-                track["dx"]=track.Xs.diff()
-                track["dy"]=track.Ys.diff()
-
-                track["step_distance"]=np.sqrt(track.dx**2 + track.dy**2)
-
-                track["velocity"]=track["step_distance"]
-
-                track["cumulative_distance"]=track.step_distance.fillna(0).cumsum()
-
-                track["bearing"]=np.arctan2(track.dy,track.dx)
-
-                track["bearing_deg"]=np.degrees(track["bearing"])
-
-                track["turn_angle"]=track["bearing_deg"].diff()
-
-                track["turn_angle"]=(track["turn_angle"]+180)%360-180
-
-
-                mean_velocity=track["velocity"].mean()
-
-                frames_60=int(fps*60)
-
-                if len(track)>frames_60:
-                    distance_60s=track["cumulative_distance"].iloc[frames_60]
-                else:
-                    distance_60s=track["cumulative_distance"].iloc[-1]
-
-
-                # ----------------------------------
-                # ZONE ANALYSIS
-                # ----------------------------------
-
-                cx=width/2
-                cy=height/2
-
-                center_radius=min(width,height)*0.25
-
-                dist_center=np.sqrt((track.Xs-cx)**2 + (track.Ys-cy)**2)
-
-                track["zone"]=np.where(dist_center<center_radius,"center","wall")
-
-                center_time=(track.zone=="center").sum()/fps
-                wall_time=(track.zone=="wall").sum()/fps
-
-                anxiety_index=wall_time/(center_time+wall_time)
-
-
-                # ----------------------------------
-                # PLOTS
-                # ----------------------------------
-
-                if frame_id % 10==0:
-
-                    fig1,ax1=plt.subplots()
-                    ax1.plot(track.Xs,track.Ys,color="red")
-                    ax1.set_aspect("equal")
-                    ax1.set_title("Trajectory")
-                    traj_plot.pyplot(fig1)
-                    plt.close(fig1)
-
-
-                    fig2,ax2=plt.subplots()
-                    ax2.plot(track["cumulative_distance"])
-                    ax2.set_title("Cumulative distance")
-                    dist_plot.pyplot(fig2)
-                    plt.close(fig2)
-
-
-                    fig3,ax3=plt.subplots()
-
-                    ax3.plot(track["velocity"],color="purple")
-
-                    ax3.axhline(mean_velocity,color="black",linestyle="--")
-
-                    ax3.set_title("Velocity")
-
-                    vel_plot.pyplot(fig3)
-                    plt.close(fig3)
-
-
-                    # Heatmap
-                    if len(track)>20:
-
-                        fig4,ax4=plt.subplots()
-
-                        sns.kdeplot(
-                            x=track.Xs,
-                            y=track.Ys,
-                            fill=True,
-                            cmap="RdYlGn_r",
-                            ax=ax4
-                        )
-
-                        ax4.set_aspect("equal")
-
-                        heat_plot.pyplot(fig4)
-
-                        plt.close(fig4)
-
-
-                    # -----------------------
-                    # Directional Analysis
-                    # -----------------------
-
-                    bins=np.linspace(-180,180,24)
-
-                    fig5=plt.figure(figsize=(4,4))
-
-                    hist,_=np.histogram(track["bearing_deg"].dropna(),bins=bins)
-
-                    theta=np.deg2rad((bins[:-1]+bins[1:])/2)
-
-                    ax5=fig5.add_subplot(111,polar=True)
-
-                    ax5.bar(theta,hist,width=np.deg2rad(15),color="steelblue")
-
-                    ax5.set_title("Absolute bearing")
-
-                    bearing_plot.pyplot(fig5)
-
-                    plt.close(fig5)
-
-
-                    fig6=plt.figure(figsize=(4,4))
-
-                    hist,_=np.histogram(track["turn_angle"].dropna(),bins=bins)
-
-                    theta=np.deg2rad((bins[:-1]+bins[1:])/2)
-
-                    ax6=fig6.add_subplot(111,polar=True)
-
-                    ax6.bar(theta,hist,width=np.deg2rad(15),color="tomato")
-
-                    ax6.set_title("Turn direction")
-
-                    turn_plot.pyplot(fig6)
-
-                    plt.close(fig6)
-
-
-                    # Zone occupancy
-                    fig7,ax7=plt.subplots()
-
-                    zone_counts=track.zone.value_counts()
-
-                    ax7.bar(zone_counts.index,zone_counts.values)
-
-                    ax7.set_title("Zone occupancy")
-
-                    zone_plot.pyplot(fig7)
-
-                    plt.close(fig7)
-
-
-                    mean_vel_display.metric("Mean velocity",f"{mean_velocity:.2f}")
-                    dist60_display.metric("Distance first 60s",f"{distance_60s:.2f}")
-                    anxiety_display.metric("Anxiety index",f"{anxiety_index:.2f}")
-
-
             frame_id+=1
-
             progress.progress(frame_id/total_frames)
 
         cap.release()
 
+
+        track=pd.DataFrame({"X":X,"Y":Y})
+
+        track["Y"]=height-track["Y"]
+
+        track["Xs"]=track["X"].rolling(5,center=True).mean()
+        track["Ys"]=track["Y"].rolling(5,center=True).mean()
+
+        track["Xs"].fillna(track["X"],inplace=True)
+        track["Ys"].fillna(track["Y"],inplace=True)
+
+        track["dx"]=track.Xs.diff()
+        track["dy"]=track.Ys.diff()
+
+        track["step_distance"]=np.sqrt(track.dx**2 + track.dy**2)
+
+        track["velocity"]=track["step_distance"]
+
+        track["cumulative_distance"]=track.step_distance.fillna(0).cumsum()
+
+        track["bearing"]=np.arctan2(track.dy,track.dx)
+
+        track["bearing_deg"]=np.degrees(track["bearing"])
+
+        track["turn_angle"]=track["bearing_deg"].diff()
+
+        track["turn_angle"]=(track["turn_angle"]+180)%360-180
+
+
+        # ------------------------------------------------
+        # Freezing detection
+        # ------------------------------------------------
+
+        freezing_threshold=0.5
+
+        track["freezing"]=track["velocity"]<freezing_threshold
+
+        freezing_time=track["freezing"].sum()/fps
+
+
+        # ------------------------------------------------
+        # Zone analysis
+        # ------------------------------------------------
+
+        cx=width/2
+        cy=height/2
+
+        center_radius=min(width,height)*0.25
+
+        dist_center=np.sqrt((track.Xs-cx)**2 + (track.Ys-cy)**2)
+
+        track["zone"]=np.where(dist_center<center_radius,"center","wall")
+
+        center_time=(track.zone=="center").sum()/fps
+        wall_time=(track.zone=="wall").sum()/fps
+
+        anxiety_index=wall_time/(center_time+wall_time)
+
+
+        # ------------------------------------------------
+        # Grid exploration index
+        # ------------------------------------------------
+
+        grid_size=5
+
+        xbins=np.linspace(track.Xs.min(),track.Xs.max(),grid_size)
+        ybins=np.linspace(track.Ys.min(),track.Ys.max(),grid_size)
+
+        grid_counts,_,_=np.histogram2d(track.Xs,track.Ys,bins=[xbins,ybins])
+
+        visited_cells=np.sum(grid_counts>0)
+
+        total_cells=(grid_size-1)*(grid_size-1)
+
+        exploration_index=visited_cells/total_cells
+
+
+        # ------------------------------------------------
+        # Behavior classification
+        # ------------------------------------------------
+
+        conditions=[
+            track["velocity"]<0.5,
+            track["velocity"]>5
+        ]
+
+        choices=["freezing","running"]
+
+        track["behavior"]=np.select(conditions,choices,default="walking")
+
+
+        # ------------------------------------------------
+        # PLOTS
+        # ------------------------------------------------
+
+        figures=[]
+
+
+        # trajectory
+
+        fig1,ax1=plt.subplots()
+        ax1.plot(track.Xs,track.Ys,color="red")
+        ax1.set_title("Trajectory")
+        ax1.set_aspect("equal")
+        fig1.savefig("outputs/trajectory.png")
+        figures.append("outputs/trajectory.png")
+
+
+        # cumulative distance
+
+        fig2,ax2=plt.subplots()
+        ax2.plot(track["cumulative_distance"])
+        ax2.set_title("Cumulative distance")
+        fig2.savefig("outputs/cumulative_distance.png")
+        figures.append("outputs/cumulative_distance.png")
+
+
+        # velocity
+
+        fig3,ax3=plt.subplots()
+        ax3.plot(track["velocity"])
+        ax3.set_title("Velocity")
+        fig3.savefig("outputs/velocity.png")
+        figures.append("outputs/velocity.png")
+
+
+        # heatmap
+
+        fig4,ax4=plt.subplots()
+        sns.kdeplot(x=track.Xs,y=track.Ys,fill=True,cmap="RdYlGn_r",ax=ax4)
+        ax4.set_aspect("equal")
+        ax4.set_title("Exploration heatmap")
+        fig4.savefig("outputs/heatmap.png")
+        figures.append("outputs/heatmap.png")
+
+
+        # speed heatmap
+
+        fig5,ax5=plt.subplots()
+
+        sc=ax5.scatter(track.Xs,track.Ys,c=track.velocity,cmap="viridis")
+
+        plt.colorbar(sc)
+
+        ax5.set_title("Speed heatmap")
+
+        fig5.savefig("outputs/speed_heatmap.png")
+
+        figures.append("outputs/speed_heatmap.png")
+
+
+        # directional analysis
+
+        bins=np.linspace(-180,180,24)
+
+        fig6=plt.figure()
+
+        hist,_=np.histogram(track["bearing_deg"].dropna(),bins=bins)
+
+        theta=np.deg2rad((bins[:-1]+bins[1:])/2)
+
+        ax6=fig6.add_subplot(111,polar=True)
+
+        ax6.bar(theta,hist,width=np.deg2rad(15))
+
+        ax6.set_title("Absolute bearing")
+
+        fig6.savefig("outputs/bearing.png")
+
+        figures.append("outputs/bearing.png")
+
+
+        fig7=plt.figure()
+
+        hist,_=np.histogram(track["turn_angle"].dropna(),bins=bins)
+
+        theta=np.deg2rad((bins[:-1]+bins[1:])/2)
+
+        ax7=fig7.add_subplot(111,polar=True)
+
+        ax7.bar(theta,hist,width=np.deg2rad(15))
+
+        ax7.set_title("Turn direction")
+
+        fig7.savefig("outputs/turn_angle.png")
+
+        figures.append("outputs/turn_angle.png")
+
+
+        # zone occupancy
+
+        fig8,ax8=plt.subplots()
+
+        zone_counts=track.zone.value_counts()
+
+        ax8.bar(zone_counts.index,zone_counts.values)
+
+        ax8.set_title("Zone occupancy")
+
+        fig8.savefig("outputs/zones.png")
+
+        figures.append("outputs/zones.png")
+
+
+        # grid exploration
+
+        fig9,ax9=plt.subplots()
+
+        ax9.imshow(grid_counts,cmap="hot")
+
+        ax9.set_title("Grid exploration")
+
+        fig9.savefig("outputs/grid_exploration.png")
+
+        figures.append("outputs/grid_exploration.png")
+
+
         st.success("Analysis complete")
 
-        csv=track.to_csv(index=False)
 
-        st.download_button(
-            "Download tracking data",
-            csv,
-            "tracking.csv"
-        )
+        # ------------------------------------------------
+        # Metrics display
+        # ------------------------------------------------
+
+        st.metric("Freezing time (s)",round(freezing_time,2))
+
+        st.metric("Anxiety index",round(anxiety_index,2))
+
+        st.metric("Exploration index",round(exploration_index,2))
+
+
+        # ------------------------------------------------
+        # Save results
+        # ------------------------------------------------
+
+        track.to_csv("outputs/tracking.csv",index=False)
+
+
+        zip_path="outputs/results.zip"
+
+        with zipfile.ZipFile(zip_path,"w") as zipf:
+
+            zipf.write("outputs/tracking.csv")
+
+            for fig in figures:
+                zipf.write(fig)
+
+
+        with open(zip_path,"rb") as f:
+
+            st.download_button(
+                "Download all results",
+                f,
+                file_name="iratco_results.zip"
+            )
 
 
 st.markdown("---")
 
 st.markdown("""
 © 2026 Mawar Subangkit  
-Mouse Tracking Analysis Software  
 
-If you use this software, please cite:
+Mouse Behavioral Tracking Software
 
-**Subangkit**, MAWAR (2026).  
-**IRATCO TrackR: Open-field Behavioral Tracking Software.**  
+**Subangkit**, MAWAR (2026)  
+**IRATCO TrackR: Open-field Behavioral Tracking Software**
 Available at: https://iratcotrackr.streamlit.app/
 """)
