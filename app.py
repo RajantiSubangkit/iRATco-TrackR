@@ -73,8 +73,10 @@ if uploaded_video:
         dist_plot=col2.empty()
         vel_plot=col3.empty()
 
+        st.subheader("Dwell Time Heatmap")
         heat_plot=st.empty()
 
+        st.subheader("Directional Analysis")
         dir_col1,dir_col2=st.columns(2)
 
         bearing_plot=dir_col1.empty()
@@ -212,7 +214,6 @@ if uploaded_video:
                         )
 
                         ax4.set_aspect("equal")
-                        st.subheader("Dwell Time Heatmap")
                         heat_plot.pyplot(fig4)
                         buf = io.BytesIO()
                         fig4.savefig(buf, format="png")
@@ -232,6 +233,7 @@ if uploaded_video:
                     ax5=fig5.add_subplot(111,polar=True)
 
                     ax5.bar(theta,hist,width=np.deg2rad(15))
+                    ax5.set_title("Absolute Bearing")
 
                     bearing_plot.pyplot(fig5)
 
@@ -246,6 +248,7 @@ if uploaded_video:
                     ax6=fig6.add_subplot(111,polar=True)
 
                     ax6.bar(theta,hist,width=np.deg2rad(15))
+                    ax6.set_title("Turn Direction")
 
                     turn_plot.pyplot(fig6)
 
