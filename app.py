@@ -82,6 +82,7 @@ if uploaded_video:
         bearing_plot=dir_col1.empty()
         turn_plot=dir_col2.empty()
 
+        st.subheader("Presence Occupancy")
         zone_plot=st.empty()
 
         metric_col1,metric_col2,metric_col3,metric_col4,metric_col5,metric_col6=st.columns(6)
