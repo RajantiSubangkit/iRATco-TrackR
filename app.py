@@ -84,12 +84,14 @@ if uploaded_video:
 
         zone_plot=st.empty()
 
-        metric_col1,metric_col2,metric_col3,metric_col4=st.columns(4)
+        metric_col1,metric_col2,metric_col3,metric_col4,metric_col5,metric_col6=st.columns(6)
 
         mean_vel_display=metric_col1.empty()
         anxiety_display=metric_col2.empty()
         freezing_display=metric_col3.empty()
         exploration_display=metric_col4.empty()
+        distance_display=metric_col2.empty()
+        time_display=metric_col3.empty()
 
         frame_id=0
         saved_plots = []
@@ -176,6 +178,9 @@ if uploaded_video:
                 total_cells=(grid_size-1)*(grid_size-1)
 
                 exploration_index=visited_cells/total_cells
+                total_distance = track["cumulative_distance"].iloc[-1]
+
+                total_time = len(track) / fps
 
                 if frame_id % 10==0:
 
@@ -268,6 +273,8 @@ if uploaded_video:
                     anxiety_display.metric("Anxiety index",f"{anxiety_index:.2f}")
                     freezing_display.metric("Freezing time (s)",f"{freezing_time:.2f}")
                     exploration_display.metric("Exploration index",f"{exploration_index:.2f}")
+                    distance_display.metric("Total Distance",f"{total_distance:.2f}")
+                    time_display.metric("Total Time (s)",f"{total_time:.2f}")
 
             frame_id+=1
 
