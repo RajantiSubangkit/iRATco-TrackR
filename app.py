@@ -90,8 +90,8 @@ if uploaded_video:
         anxiety_display=metric_col2.empty()
         freezing_display=metric_col3.empty()
         exploration_display=metric_col4.empty()
-        distance_display=metric_col2.empty()
-        time_display=metric_col3.empty()
+        distance_display=metric_col5.empty()
+        time_display=metric_col6.empty()
 
         frame_id=0
         saved_plots = []
