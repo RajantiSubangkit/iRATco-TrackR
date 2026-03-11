@@ -111,16 +111,11 @@ if uploaded_video and st.session_state.running:
 
     bearing_plot = dir_col1.empty()
     turn_plot = dir_col2.empty()
+### line ####
+    st.subheader("Behavior Metrics")
+
+    metrics_table = st.empty()
 ###
-    metric_col1,metric_col2,metric_col3,metric_col4,metric_col5,metric_col6=st.columns(6)
-
-    mean_vel_display=metric_col1.empty()
-    anxiety_display=metric_col2.empty()
-    freezing_display=metric_col3.empty()
-    exploration_display=metric_col4.empty()
-    distance_display=metric_col5.empty()
-    time_display=metric_col6.empty()
-
     frame_id=0
     saved_plots=[]
 
@@ -276,12 +271,18 @@ if uploaded_video and st.session_state.running:
                 zone_plot.pyplot(fig7)
                 plt.close(fig7)
 
-                mean_vel_display.metric("Mean velocity",f"{mean_velocity:.2f}")
-                anxiety_display.metric("Anxiety index",f"{anxiety_index:.2f}")
-                freezing_display.metric("Freezing time (s)",f"{freezing_time:.2f}")
-                exploration_display.metric("Exploration index",f"{exploration_index:.2f}")
-                distance_display.metric("Total Distance",f"{total_distance:.2f}")
-                time_display.metric("Total Time (s)",f"{total_time:.2f}")
+                metrics_df = pd.DataFrame([{
+                    "Mean velocity": round(mean_velocity,2),
+                    "Anxiety index": round(anxiety_index,2),
+                    "Freezing time (s)": round(freezing_time,2),
+                    "Exploration index": round(exploration_index,2),
+                    "Total Distance": round(total_distance,2),
+                    "Total Time (s)": round(total_time,2)
+                }])
+
+                metrics_table.dataframe(metrics_df, use_container_width=True)
+                metrics_df = metrics_df.round(2)
+                metrics_table.table(metrics_df)
 
         frame_id+=1
         progress.progress(frame_id/total_frames)
