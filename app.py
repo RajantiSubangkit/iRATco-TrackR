@@ -1,12 +1,5 @@
 import streamlit as st
 from PIL import Image
-
-st.set_page_config(
-    page_title="iRATco TrackR",
-    page_icon="logo.png",
-    layout="wide"
-)
-import streamlit as st
 import cv2
 import numpy as np
 import pandas as pd
@@ -16,6 +9,14 @@ import tempfile
 import zipfile
 import io
 
+# HARUS PALING ATAS DAN HANYA SEKALI
+st.set_page_config(
+    page_title="iRATco TrackR",
+    page_icon="logo.png",
+    layout="wide"
+)
+
+# CSS styling
 st.markdown("""
 <style>
 
@@ -47,9 +48,6 @@ margin-top:60px;
 
 </style>
 """, unsafe_allow_html=True)
-
-
-st.set_page_config(layout="wide")
 
 st.title("iRATco TrackR")
 
