@@ -9,10 +9,7 @@ import tempfile
 import zipfile
 import io
 
-st.image("logo.png", width=300)
-
-st.markdown('<p class="main-title">iRATco TrackR</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Open-field Rodent Behavioral Tracking Software</p>', unsafe_allow_html=True)
+st.image("logo_iratco.png", width=300)
 
 st.set_page_config(
     page_title="iRATco TrackR",
