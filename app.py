@@ -239,6 +239,7 @@ if uploaded_video and st.session_state.running:
                     sns.kdeplot(x=track.Xs,y=track.Ys,fill=True,cmap="RdYlGn_r",ax=ax4)
                     ax4.set_aspect("equal")
                     heat_plot.pyplot(fig4)
+                    ax4.set_title("Dwell Time Heatmap")
                     plt.close(fig4)
 
                 # absolute bearing
@@ -272,6 +273,7 @@ if uploaded_video and st.session_state.running:
                 zone_counts=track.zone.value_counts()
                 ax7.bar(zone_counts.index,zone_counts.values)
                 zone_plot.pyplot(fig7)
+                ax7.set_title("Zone Occupancy")
                 plt.close(fig7)
 
                 mean_vel_display.metric("Mean velocity",f"{mean_velocity:.2f}")
@@ -285,7 +287,6 @@ if uploaded_video and st.session_state.running:
         progress.progress(frame_id/total_frames)
 
     cap.release()
-
     st.success("Analysis complete")
 
 st.markdown("---")
