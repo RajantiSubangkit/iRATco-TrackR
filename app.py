@@ -203,7 +203,7 @@ if uploaded_video and st.session_state.running:
             track["dy"]=track.Ys.diff()
 
             track["step_distance"]=np.sqrt(track.dx**2+track.dy**2)
-            movement_threshold = 0.5  # pixel
+            movement_threshold = 0.3  # pixel
 
             track.loc[track["step_distance"] < movement_threshold, "Xs"] = np.nan
             track.loc[track["step_distance"] < movement_threshold, "Ys"] = np.nan
