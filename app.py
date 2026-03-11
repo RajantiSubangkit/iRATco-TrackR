@@ -63,12 +63,9 @@ if "paused" not in st.session_state:
     st.session_state.paused = False
 
 if uploaded_video:
-
-    control_col1, control_col2, control_col3= st.columns(3)
+if st.button("Run Analysis"):
     
-    with control_col1:
-        if st.button("Run Analysis"):
-            
+    control_col1, control_col2= st.columns(2)
     with control_col1:
         if st.button("⏸ Pause"):
             st.session_state.paused = True
