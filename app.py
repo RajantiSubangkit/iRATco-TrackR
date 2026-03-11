@@ -146,6 +146,7 @@ if uploaded_video and st.session_state.running:
     unsafe_allow_html=True
     )
     metrics_table = st.empty()
+    
     while True:
 
         if not st.session_state.running:
@@ -352,10 +353,6 @@ if uploaded_video and st.session_state.running:
                 metrics_df.to_html(classes="metrics-table", index=False),
                 unsafe_allow_html=True
                 )
-
-
-        frame_id+=1
-        progress.progress(frame_id/total_frames)
 
     cap.release()
     st.success("Analysis complete")
