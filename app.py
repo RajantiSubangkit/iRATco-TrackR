@@ -329,16 +329,21 @@ if uploaded_video and st.session_state.running:
                 font-size:22px;
                 text-align:center;
                 margin:auto;
+                margin-top:5px;
+                margin-bottom:5px;
+                border-collapse:collapse;
                 }
 
                 .metrics-table th {
                 font-size:24px;
                 font-weight:bold;
                 text-align:center;
+                padding:8px;
                 }
 
                 .metrics-table td {
                 font-size:22px;
+                padding:8px;
                 }
                 </style>
                 """, unsafe_allow_html=True)
