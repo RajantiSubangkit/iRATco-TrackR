@@ -189,8 +189,13 @@ if uploaded_video and st.session_state.running:
 
         track["Y"]=height-track["Y"]
 
-        track["Xs"]=track["X"].rolling(5,center=True).mean()
-        track["Ys"]=track["Y"].rolling(5,center=True).mean()
+        track["Xs"]=track["X"].rolling(9,center=True).mean()
+        track["Ys"]=track["Y"].rolling(9,center=True).mean()
+
+        alpha = 0.2
+
+        track["Xs"] = track["X"].ewm(alpha=alpha).mean()
+        track["Ys"] = track["Y"].ewm(alpha=alpha).mean()
 
 
         track["Xs"].fillna(track["X"],inplace=True)
