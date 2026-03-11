@@ -44,11 +44,8 @@ skip=speed_map[analysis_speed]
 if "running" not in st.session_state:
     st.session_state.running=False
 
-if "paused" not in st.session_state:
-    st.session_state.paused=False
-
 # CONTROL BUTTONS
-c1,c2,c3=st.columns(3)
+c1,c2=st.columns(2)
 
 with c1:
     if st.button("▶ Start"):
@@ -56,10 +53,6 @@ with c1:
         st.session_state.paused=False
 
 with c2:
-    if st.button("⏸ Pause"):
-        st.session_state.paused=True
-
-with c3:
     if st.button("⏹ Stop"):
         st.session_state.running=False
         st.session_state.paused=False
@@ -134,9 +127,6 @@ if uploaded_video and st.session_state.running:
         if not st.session_state.running:
             break
 
-        if st.session_state.paused:
-            time.sleep(0.1)
-            continue
 
         ret,frame=cap.read()
 
