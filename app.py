@@ -26,23 +26,12 @@ st.set_page_config(
 st.title("iRATco TrackR")
 
 uploaded_video = st.file_uploader("Upload your video")
-col1, col2, col3 = st.columns(3)
 
-with col1:
-    if st.button("▶ Start"):
-        st.session_state.running = True
-
-with col2:
-    if st.button("⏸ Pause"):
-        st.session_state.running = False
-
-with col3:
-    if st.button("⏹ Stop"):
-        st.session_state.running = False
 analysis_speed = st.selectbox(
     "Analysis Speed",
     ["1X","2X","4X","8X","20X"]
 )
+
 speed_map={
     "1X":1,
     "2X":2,
@@ -52,6 +41,30 @@ speed_map={
 }
 
 skip=speed_map[analysis_speed]
+
+# SESSION STATE
+if "running" not in st.session_state:
+    st.session_state.running=False
+
+if "paused" not in st.session_state:
+    st.session_state.paused=False
+
+# CONTROL BUTTONS
+c1,c2,c3=st.columns(3)
+
+with c1:
+    if st.button("▶ Start"):
+        st.session_state.running=True
+        st.session_state.paused=False
+
+with c2:
+    if st.button("⏸ Pause"):
+        st.session_state.paused=True
+
+with c3:
+    if st.button("⏹ Stop"):
+        st.session_state.running=False
+        st.session_state.paused=False
 
 
 def detect_mouse(frame):
@@ -70,34 +83,31 @@ def detect_mouse(frame):
     return int(x),int(y)
 
 
-if "paused" not in st.session_state:
-    st.session_state.paused = False
+if uploaded_video and st.session_state.running:
 
-if uploaded_video:
-    if st.button("Run Analysis"):
+    tfile=tempfile.NamedTemporaryFile(delete=False)
+    tfile.write(uploaded_video.read())
 
-        tfile = tempfile.NamedTemporaryFile(delete=False)
-        tfile.write(uploaded_video.read())
+    cap=cv2.VideoCapture(tfile.name)
 
-        cap = cv2.VideoCapture(tfile.name)
+    total_frames=int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    fps=cap.get(cv2.CAP_PROP_FPS)
 
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        fps = cap.get(cv2.CAP_PROP_FPS)
+    X=[]
+    Y=[]
 
-        X = []
-        Y = []
+    frame_window=st.empty()
 
-        frame_window = st.empty()
+    progress=st.progress(0)
 
-        progress = st.progress(0)
+    col1,col2,col3=st.columns(3)
 
-        col1, col2, col3 = st.columns(3)
+    traj_plot=col1.empty()
+    dist_plot=col2.empty()
+    vel_plot=col3.empty()
 
-        traj_plot = col1.empty()
-        dist_plot = col2.empty()
-        vel_plot = col3.empty()
 
         st.subheader("Dwell Time Heatmap")
         heat_plot=st.empty()
