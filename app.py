@@ -57,7 +57,24 @@ with c2:
         st.session_state.running=False
         st.session_state.paused=False
 
+def negative_mouse_view(frame):
 
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # invert background
+    inv = cv2.bitwise_not(gray)
+
+    # threshold tikus
+    _, mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+
+    # ubah background jadi BGR
+    neg_frame = cv2.cvtColor(inv, cv2.COLOR_GRAY2BGR)
+
+    # warnai tikus merah
+    neg_frame[mask>0] = [0,0,255]
+
+    return neg_frame
+    
 def detect_mouse(frame):
 
     gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
@@ -89,7 +106,16 @@ if uploaded_video and st.session_state.running:
     X=[]
     Y=[]
 
-    frame_window=st.empty()
+    video_col1, video_col2 = st.columns(2)
+
+    with video_col1:
+        st.markdown("**Raw Video**")
+        raw_video = st.empty()
+
+    with video_col2:
+        st.markdown("**Tracking View**")
+        neg_video = st.empty()
+    
     progress=st.progress(0)
 
     col1,col2,col3=st.columns(3)
@@ -144,8 +170,17 @@ if uploaded_video and st.session_state.running:
 
         if x is not None:
             cv2.circle(frame,(x,y),6,(0,0,255),-1)
+        if x is not None:
+            cv2.circle(neg_frame,(x,y),6,(255,0,0),-1)
 
-        frame_window.image(frame,channels="BGR")
+        # buat negative frame
+        neg_frame = negative_mouse_view(frame)
+
+        # tampilkan raw video
+        raw_video.image(frame, channels="BGR")
+
+        # tampilkan negative video
+        neg_video.image(neg_frame, channels="BGR")
 
         track=pd.DataFrame({"X":X,"Y":Y})
 
