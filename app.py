@@ -190,8 +190,13 @@ if uploaded_video and st.session_state.running:
 
         track["Y"]=height-track["Y"]
 
-        track["Xs"]=track["X"].rolling(5,center=True).mean()
-        track["Ys"]=track["Y"].rolling(5,center=True).mean()
+        track["Xs"]=track["X"].rolling(9,center=True).mean()
+        track["Ys"]=track["Y"].rolling(9,center=True).mean()
+
+        alpha = 0.2
+
+        track["Xs"] = track["X"].ewm(alpha=alpha).mean()
+        track["Ys"] = track["Y"].ewm(alpha=alpha).mean()
 
         track["Xs"].fillna(track["X"],inplace=True)
         track["Ys"].fillna(track["Y"],inplace=True)
@@ -202,6 +207,13 @@ if uploaded_video and st.session_state.running:
             track["dy"]=track.Ys.diff()
 
             track["step_distance"]=np.sqrt(track.dx**2+track.dy**2)
+            movement_threshold = 2  # pixel
+
+            track.loc[track["step_distance"] < movement_threshold, "Xs"] = np.nan
+            track.loc[track["step_distance"] < movement_threshold, "Ys"] = np.nan
+
+            track["Xs"].fillna(method="ffill", inplace=True)
+            track["Ys"].fillna(method="ffill", inplace=True)
 
             track["velocity"]=track["step_distance"]
 
