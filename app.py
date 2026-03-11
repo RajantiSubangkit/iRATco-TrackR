@@ -145,7 +145,7 @@ if uploaded_video and st.session_state.running:
     "<h2 style='text-align:center;'>Behavior Metrics</h2>",
     unsafe_allow_html=True
     )
-    
+    metrics_table = st.empty()
     while True:
 
         if not st.session_state.running:
@@ -347,11 +347,6 @@ if uploaded_video and st.session_state.running:
                 }
                 </style>
                 """, unsafe_allow_html=True)
-
-                metrics_table.markdown(
-                metrics_df.to_html(classes="metrics-table", index=False),
-                unsafe_allow_html=True
-                )
                 
             frame_id+=1
             progress.progress(frame_id/total_frames)
