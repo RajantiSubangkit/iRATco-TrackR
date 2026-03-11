@@ -354,8 +354,8 @@ if uploaded_video and st.session_state.running:
                 unsafe_allow_html=True
                 )
                 
-                frame_id+=1
-                progress.progress(frame_id/total_frames)
+            frame_id+=1
+            progress.progress(frame_id/total_frames)
 
     cap.release()
     st.success("Analysis complete")
