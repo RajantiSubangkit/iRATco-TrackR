@@ -138,7 +138,6 @@ if uploaded_video and st.session_state.running:
     bearing_plot = dir_col1.empty()
     turn_plot = dir_col2.empty()
 ### line ####
-    st.subheader("Behavior Metrics")
     metrics_table = st.empty()
 ###
     frame_id=0
