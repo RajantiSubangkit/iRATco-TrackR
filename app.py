@@ -13,6 +13,13 @@ st.image("logo.png", width=300)
 
 st.markdown('<p class="main-title">iRATco TrackR</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Open-field Rodent Behavioral Tracking Software</p>', unsafe_allow_html=True)
+
+st.set_page_config(
+    page_title="iRATco TrackR",
+    page_icon="logo.png",
+    layout="wide"
+)
+
 st.title("iRATco TrackR")
 
 uploaded_video = st.file_uploader("Upload your video")
