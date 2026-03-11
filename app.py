@@ -95,7 +95,7 @@ if uploaded_video:
         bearing_plot=dir_col1.empty()
         turn_plot=dir_col2.empty()
 
-        st.subheader("Presence Occupancy")
+        st.subheader("Zone Occupancy")
         zone_plot=st.empty()
 
         metric_col1,metric_col2,metric_col3,metric_col4,metric_col5,metric_col6=st.columns(6)
@@ -200,6 +200,8 @@ if uploaded_video:
 
                     fig1,ax1=plt.subplots()
                     ax1.plot(track.Xs,track.Ys,color="red")
+                    ax1.set_xlim(0,width)
+                    ax1.set_ylim(0,height)
                     ax1.set_aspect("equal")
                     ax1.set_title("Movement Trajectory")
                     traj_plot.pyplot(fig1)
@@ -212,12 +214,18 @@ if uploaded_video:
                     ax2.plot(track["cumulative_distance"])
                     ax2.set_title("Cumulative Distance")
                     dist_plot.pyplot(fig2)
+                    buf = io.BytesIO()
+                    fig2.savefig(buf, format="png")
+                    saved_plots.append(("cumulative_distance.png", buf.getvalue()))
                     plt.close(fig2)
 
                     fig3,ax3=plt.subplots()
                     ax3.plot(track["velocity"])
                     ax3.set_title("Velocity")
                     vel_plot.pyplot(fig3)
+                    buf = io.BytesIO()
+                    fig3.savefig(buf, format="png")
+                    saved_plots.append(("velocity.png", buf.getvalue()))
                     plt.close(fig3)
 
                     if len(track)>20:
@@ -255,7 +263,9 @@ if uploaded_video:
                     ax5.set_title("Absolute Bearing")
 
                     bearing_plot.pyplot(fig5)
-
+                    buf = io.BytesIO()
+                    fig5.savefig(buf, format="png")
+                    saved_plots.append(("bearing.png", buf.getvalue()))
                     plt.close(fig5)
 
                     fig6=plt.figure(figsize=(4,4))
@@ -270,7 +280,9 @@ if uploaded_video:
                     ax6.set_title("Turn Direction")
 
                     turn_plot.pyplot(fig6)
-
+                    buf = io.BytesIO()
+                    fig6.savefig(buf, format="png")
+                    saved_plots.append(("turn_direction.png", buf.getvalue()))
                     plt.close(fig6)
 
                     fig7,ax7=plt.subplots()
@@ -280,7 +292,9 @@ if uploaded_video:
                     ax7.bar(zone_counts.index,zone_counts.values)
 
                     zone_plot.pyplot(fig7)
-
+                    buf = io.BytesIO()
+                    fig7.savefig(buf, format="png")
+                    saved_plots.append(("zone_occupancy.png", buf.getvalue()))
                     plt.close(fig7)
 
                     mean_vel_display.metric("Mean velocity",f"{mean_velocity:.2f}")
