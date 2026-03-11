@@ -9,10 +9,10 @@ import tempfile
 import zipfile
 import io
 
-col1, col2 = st.columns([8,2])
+col1, col2 = st.columns([2,2])
 
 with col1:
-    st.markdown('<p class="main-title">iRATco TrackR</p>', unsafe_allow_html=True)
+    st.markdown('<p class="main-title">Supported by:</p>', unsafe_allow_html=True)
 
 with col2:
     st.image("logo_iratco.png", width=300)
