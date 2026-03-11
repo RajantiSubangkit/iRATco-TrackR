@@ -375,6 +375,7 @@ st.markdown("""
 Mouse Behavioral Tracking Software  
 
 If you use this software, please cite:
+
 **Subangkit**, MAWAR (2026)  
 **iRATco TrackR: Open-field Behavioral Tracking Software**  
 Available at: https://iratcotrackr.streamlit.app/
