@@ -48,12 +48,12 @@ if "running" not in st.session_state:
 c1,c2=st.columns(2)
 
 with c1:
-    if st.button("▶ Start"):
+    if st.button("▶ Run Analysis"):
         st.session_state.running=True
         st.session_state.paused=False
 
 with c2:
-    if st.button("⏹ Stop"):
+    if st.button("⏹ Stop Analysis"):
         st.session_state.running=False
         st.session_state.paused=False
 
@@ -214,8 +214,6 @@ if uploaded_video and st.session_state.running:
 
                 fig1,ax1=plt.subplots()
                 ax1.plot(track.Xs,track.Ys,color="red")
-                ax1.set_xlim(0,width)
-                ax1.set_ylim(0,height)
                 ax1.set_aspect("equal")
                 ax1.set_title("Movement Trajectory")
                 traj_plot.pyplot(fig1)
@@ -294,8 +292,8 @@ st.markdown("""
 © 2026 Mawar Subangkit  
 Mouse Behavioral Tracking Software  
 
-Subangkit, M. (2026)  
-iRATco TrackR: Open-field Behavioral Tracking Software  
+**Subangkit**, MAWAR (2026)  
+**iRATco TrackR: Open-field Behavioral Tracking Software**  
 
 Available at: https://iratcotrackr.streamlit.app/
 """)
