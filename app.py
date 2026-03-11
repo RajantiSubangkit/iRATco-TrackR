@@ -64,13 +64,8 @@ if "paused" not in st.session_state:
 
 if uploaded_video:
 
-    if st.button("Run Analysis"):
-        tfile=tempfile.NamedTemporaryFile(delete=False)
-        tfile.write(uploaded_video.read())
+    control_col1, control_col2 = st.columns(2)
 
-        cap=cv2.VideoCapture(tfile.name)
-        
-    control_col1, control_col2= st.columns(2)
     with control_col1:
         if st.button("⏸ Pause"):
             st.session_state.paused = True
@@ -79,23 +74,31 @@ if uploaded_video:
         if st.button("▶ Resume"):
             st.session_state.paused = False
 
-        total_frames=int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        fps=cap.get(cv2.CAP_PROP_FPS)
 
-        X=[]
-        Y=[]
+    if st.button("Run Analysis"):
 
-        frame_window=st.empty()
+        tfile = tempfile.NamedTemporaryFile(delete=False)
+        tfile.write(uploaded_video.read())
 
-        progress=st.progress(0)
+        cap = cv2.VideoCapture(tfile.name)
 
-        col1,col2,col3=st.columns(3)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        fps = cap.get(cv2.CAP_PROP_FPS)
 
-        traj_plot=col1.empty()
-        dist_plot=col2.empty()
-        vel_plot=col3.empty()
+        X = []
+        Y = []
+
+        frame_window = st.empty()
+
+        progress = st.progress(0)
+
+        col1, col2, col3 = st.columns(3)
+
+        traj_plot = col1.empty()
+        dist_plot = col2.empty()
+        vel_plot = col3.empty()
 
         st.subheader("Dwell Time Heatmap")
         heat_plot=st.empty()
