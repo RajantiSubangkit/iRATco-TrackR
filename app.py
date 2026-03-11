@@ -97,19 +97,21 @@ if uploaded_video and st.session_state.running:
     traj_plot=col1.empty()
     dist_plot=col2.empty()
     vel_plot=col3.empty()
+###
+    st.subheader("Spatial Behaviour")
 
-    st.subheader("Dwell Time Heatmap")
-    heat_plot=st.empty()
+    spatial_col1, spatial_col2 = st.columns(2)
+
+    heat_plot = spatial_col1.empty()
+    zone_plot = spatial_col2.empty()
 
     st.subheader("Directional Analysis")
-    dir_col1,dir_col2=st.columns(2)
 
-    bearing_plot=dir_col1.empty()
-    turn_plot=dir_col2.empty()
+    dir_col1,dir_col2 = st.columns(2)
 
-    st.subheader("Zone Occupancy")
-    zone_plot=st.empty()
-
+    bearing_plot = dir_col1.empty()
+    turn_plot = dir_col2.empty()
+###
     metric_col1,metric_col2,metric_col3,metric_col4,metric_col5,metric_col6=st.columns(6)
 
     mean_vel_display=metric_col1.empty()
