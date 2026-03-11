@@ -278,7 +278,30 @@ if uploaded_video and st.session_state.running:
                     "Total Time (s)": round(total_time,2)
                 }])
 
-                metrics_table.dataframe(metrics_df, use_container_width=True)
+                st.markdown("""
+                <style>
+                .metrics-table {
+                font-size:22px;
+                text-align:center;
+                margin:auto;
+                }
+
+                .metrics-table th {
+                font-size:24px;
+                font-weight:bold;
+                text-align:center;
+                }
+
+                .metrics-table td {
+                font-size:22px;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+
+                st.markdown(
+                metrics_df.to_html(classes="metrics-table", index=False),
+                unsafe_allow_html=True
+                )
 
 
         frame_id+=1
@@ -286,6 +309,15 @@ if uploaded_video and st.session_state.running:
 
     cap.release()
     st.success("Analysis complete")
+
+    csv = track.to_csv(index=False)
+
+    st.download_button(
+        label="Download tracking data (CSV)",
+        data=csv,
+        file_name="tracking_data.csv",
+        mime="text/csv"
+    )
 
 st.markdown("---")
 
