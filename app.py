@@ -168,10 +168,14 @@ if uploaded_video and st.session_state.running:
         X.append(x)
         Y.append(y)
 
+        neg_frame = negative_mouse_view(frame)
+
         if x is not None:
             cv2.circle(frame,(x,y),6,(0,0,255),-1)
-        if x is not None:
             cv2.circle(neg_frame,(x,y),6,(255,0,0),-1)
+
+        raw_video.image(frame, channels="BGR")
+        neg_video.image(neg_frame, channels="BGR")
 
         # buat negative frame
         neg_frame = negative_mouse_view(frame)
