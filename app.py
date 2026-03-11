@@ -7,8 +7,9 @@ import seaborn as sns
 import tempfile
 import zipfile
 import io
+import time
 
-# PAGE CONFIG (HARUS PALING ATAS)
+# PAGE CONFIG
 st.set_page_config(
     page_title="iRATco TrackR",
     page_icon="logo.png",
@@ -96,7 +97,6 @@ if uploaded_video and st.session_state.running:
     Y=[]
 
     frame_window=st.empty()
-
     progress=st.progress(0)
 
     col1,col2,col3=st.columns(3)
@@ -135,7 +135,7 @@ if uploaded_video and st.session_state.running:
             break
 
         if st.session_state.paused:
-            st.warning("Paused")
+            time.sleep(0.1)
             continue
 
         ret,frame=cap.read()
@@ -178,10 +178,46 @@ if uploaded_video and st.session_state.running:
 
             track["cumulative_distance"]=track.step_distance.fillna(0).cumsum()
 
+            track["bearing"]=np.arctan2(track.dy,track.dx)
+            track["bearing_deg"]=np.degrees(track["bearing"])
+
+            track["turn_angle"]=track["bearing_deg"].diff()
+            track["turn_angle"]=(track["turn_angle"]+180)%360-180
+
             mean_velocity=track["velocity"].mean()
 
-            total_distance=track["cumulative_distance"].iloc[-1]
+            # freezing
+            freezing_threshold=0.5
+            track["freezing"]=track["velocity"]<freezing_threshold
+            freezing_time=track["freezing"].sum()/fps
 
+            # zone analysis
+            cx=width/2
+            cy=height/2
+            center_radius=min(width,height)*0.25
+
+            dist_center=np.sqrt((track.Xs-cx)**2+(track.Ys-cy)**2)
+
+            track["zone"]=np.where(dist_center<center_radius,"center","wall")
+
+            center_time=(track.zone=="center").sum()/fps
+            wall_time=(track.zone=="wall").sum()/fps
+
+            anxiety_index=wall_time/(center_time+wall_time)
+
+            # exploration
+            grid_size=5
+            xbins=np.linspace(track.Xs.min(),track.Xs.max(),grid_size)
+            ybins=np.linspace(track.Ys.min(),track.Ys.max(),grid_size)
+
+            grid_counts,_,_=np.histogram2d(track.Xs,track.Ys,bins=[xbins,ybins])
+
+            visited_cells=np.sum(grid_counts>0)
+            total_cells=(grid_size-1)*(grid_size-1)
+
+            exploration_index=visited_cells/total_cells
+
+            total_distance=track["cumulative_distance"].iloc[-1]
             total_time=len(track)/fps
 
             if frame_id % 10==0:
@@ -193,33 +229,65 @@ if uploaded_video and st.session_state.running:
                 ax1.set_aspect("equal")
                 ax1.set_title("Movement Trajectory")
                 traj_plot.pyplot(fig1)
-
-                buf=io.BytesIO()
-                fig1.savefig(buf,format="png")
-                saved_plots.append(("trajectory.png",buf.getvalue()))
                 plt.close(fig1)
 
                 fig2,ax2=plt.subplots()
                 ax2.plot(track["cumulative_distance"])
                 ax2.set_title("Cumulative Distance")
                 dist_plot.pyplot(fig2)
-
-                buf=io.BytesIO()
-                fig2.savefig(buf,format="png")
-                saved_plots.append(("distance.png",buf.getvalue()))
                 plt.close(fig2)
 
                 fig3,ax3=plt.subplots()
                 ax3.plot(track["velocity"])
                 ax3.set_title("Velocity")
                 vel_plot.pyplot(fig3)
-
-                buf=io.BytesIO()
-                fig3.savefig(buf,format="png")
-                saved_plots.append(("velocity.png",buf.getvalue()))
                 plt.close(fig3)
 
+                # heatmap
+                if len(track)>20:
+                    fig4,ax4=plt.subplots()
+                    sns.kdeplot(x=track.Xs,y=track.Ys,fill=True,cmap="RdYlGn_r",ax=ax4)
+                    ax4.set_aspect("equal")
+                    heat_plot.pyplot(fig4)
+                    plt.close(fig4)
+
+                # absolute bearing
+                bins=np.linspace(-180,180,24)
+
+                fig5=plt.figure(figsize=(4,4))
+                hist,_=np.histogram(track["bearing_deg"].dropna(),bins=bins)
+                theta=np.deg2rad((bins[:-1]+bins[1:])/2)
+
+                ax5=fig5.add_subplot(111,polar=True)
+                ax5.bar(theta,hist,width=np.deg2rad(15))
+                ax5.set_title("Absolute Bearing")
+
+                bearing_plot.pyplot(fig5)
+                plt.close(fig5)
+
+                # turn direction
+                fig6=plt.figure(figsize=(4,4))
+                hist,_=np.histogram(track["turn_angle"].dropna(),bins=bins)
+                theta=np.deg2rad((bins[:-1]+bins[1:])/2)
+
+                ax6=fig6.add_subplot(111,polar=True)
+                ax6.bar(theta,hist,width=np.deg2rad(15))
+                ax6.set_title("Turn Direction")
+
+                turn_plot.pyplot(fig6)
+                plt.close(fig6)
+
+                # zone occupancy
+                fig7,ax7=plt.subplots()
+                zone_counts=track.zone.value_counts()
+                ax7.bar(zone_counts.index,zone_counts.values)
+                zone_plot.pyplot(fig7)
+                plt.close(fig7)
+
                 mean_vel_display.metric("Mean velocity",f"{mean_velocity:.2f}")
+                anxiety_display.metric("Anxiety index",f"{anxiety_index:.2f}")
+                freezing_display.metric("Freezing time (s)",f"{freezing_time:.2f}")
+                exploration_display.metric("Exploration index",f"{exploration_index:.2f}")
                 distance_display.metric("Total Distance",f"{total_distance:.2f}")
                 time_display.metric("Total Time (s)",f"{total_time:.2f}")
 
@@ -230,36 +298,14 @@ if uploaded_video and st.session_state.running:
 
     st.success("Analysis complete")
 
-    zip_buffer=io.BytesIO()
-
-    with zipfile.ZipFile(zip_buffer,"w") as zip_file:
-        for filename,data in saved_plots:
-            zip_file.writestr(filename,data)
-
-    st.download_button(
-        label="Download all plots",
-        data=zip_buffer.getvalue(),
-        file_name="iratco_plots.zip",
-        mime="application/zip"
-    )
-
-    csv=track.to_csv(index=False)
-
-    st.download_button(
-        "Download tracking data",
-        csv,
-        "tracking.csv"
-    )
-
-
 st.markdown("---")
 
 st.markdown("""
 © 2026 Mawar Subangkit  
-Mouse Behavioral Tracking Software
+Mouse Behavioral Tracking Software  
 
 Subangkit, M. (2026)  
-iRATco TrackR: Open-field Behavioral Tracking Software
+iRATco TrackR: Open-field Behavioral Tracking Software  
 
 Available at: https://iratcotrackr.streamlit.app/
 """)
