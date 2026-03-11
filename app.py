@@ -1,4 +1,12 @@
 import streamlit as st
+from PIL import Image
+
+st.set_page_config(
+    page_title="iRATco TrackR",
+    page_icon="logo.png",
+    layout="wide"
+)
+import streamlit as st
 import cv2
 import numpy as np
 import pandas as pd
@@ -7,6 +15,39 @@ import seaborn as sns
 import tempfile
 import zipfile
 import io
+
+st.markdown("""
+<style>
+
+.main-title{
+font-size:40px;
+font-weight:700;
+color:#2c3e50;
+}
+
+.subtitle{
+font-size:18px;
+color:#555;
+margin-bottom:20px;
+}
+
+.upload-box{
+background:#f4f6f7;
+padding:25px;
+border-radius:12px;
+border:1px solid #ddd;
+}
+
+.footer{
+text-align:center;
+font-size:14px;
+color:gray;
+margin-top:60px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 
 st.set_page_config(layout="wide")
 
