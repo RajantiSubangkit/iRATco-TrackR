@@ -137,8 +137,7 @@ if uploaded_video and st.session_state.running:
 
     bearing_plot = dir_col1.empty()
     turn_plot = dir_col2.empty()
-### line ####
-    metrics_table = st.empty()
+
 ###
     frame_id=0
     saved_plots=[]
@@ -146,7 +145,6 @@ if uploaded_video and st.session_state.running:
     "<h2 style='text-align:center;'>Behavior Metrics</h2>",
     unsafe_allow_html=True
     )
-
     metrics_table = st.empty()
     while True:
 
@@ -174,15 +172,6 @@ if uploaded_video and st.session_state.running:
             cv2.circle(neg_frame,(x,y),6,(255,0,0),-1)
 
         raw_video.image(frame, channels="BGR")
-        neg_video.image(neg_frame, channels="BGR")
-
-        # buat negative frame
-        neg_frame = negative_mouse_view(frame)
-
-        # tampilkan raw video
-        raw_video.image(frame, channels="BGR")
-
-        # tampilkan negative video
         neg_video.image(neg_frame, channels="BGR")
 
         track=pd.DataFrame({"X":X,"Y":Y})
