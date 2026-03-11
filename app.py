@@ -64,8 +64,11 @@ if "paused" not in st.session_state:
 
 if uploaded_video:
 
-    control_col1, control_col2 = st.columns(2)
-
+    control_col1, control_col2, control_col3= st.columns(3)
+    
+    with control_col1:
+        if st.button("Run Analysis"):
+            
     with control_col1:
         if st.button("⏸ Pause"):
             st.session_state.paused = True
@@ -73,8 +76,6 @@ if uploaded_video:
     with control_col2:
         if st.button("▶ Resume"):
             st.session_state.paused = False
-        
-    if st.button("Run Analysis"):
 
         tfile=tempfile.NamedTemporaryFile(delete=False)
         tfile.write(uploaded_video.read())
