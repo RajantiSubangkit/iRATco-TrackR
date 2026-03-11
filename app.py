@@ -59,8 +59,21 @@ def detect_mouse(frame):
     return int(x),int(y)
 
 
+if "paused" not in st.session_state:
+    st.session_state.paused = False
+
 if uploaded_video:
 
+control_col1, control_col2 = st.columns(2)
+
+with control_col1:
+    if st.button("⏸ Pause"):
+        st.session_state.paused = True
+
+with control_col2:
+    if st.button("▶ Resume"):
+        st.session_state.paused = False
+        
     if st.button("Run Analysis"):
 
         tfile=tempfile.NamedTemporaryFile(delete=False)
@@ -113,7 +126,9 @@ if uploaded_video:
         while True:
 
             ret,frame=cap.read()
-
+        while st.session_state.paused:
+            st.warning("Paused")
+            st.stop()
             if not ret:
                 break
 
