@@ -145,7 +145,6 @@ if uploaded_video and st.session_state.running:
     "<h2 style='text-align:center;'>Behavior Metrics</h2>",
     unsafe_allow_html=True
     )
-    metrics_table = st.empty()
     
     while True:
 
