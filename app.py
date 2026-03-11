@@ -113,7 +113,6 @@ if uploaded_video and st.session_state.running:
     turn_plot = dir_col2.empty()
 ### line ####
     st.subheader("Behavior Metrics")
-
     metrics_table = st.empty()
 ###
     frame_id=0
@@ -123,7 +122,6 @@ if uploaded_video and st.session_state.running:
 
         if not st.session_state.running:
             break
-
 
         ret,frame=cap.read()
 
@@ -281,8 +279,7 @@ if uploaded_video and st.session_state.running:
                 }])
 
                 metrics_table.dataframe(metrics_df, use_container_width=True)
-                metrics_df = metrics_df.round(2)
-                metrics_table.table(metrics_df)
+
 
         frame_id+=1
         progress.progress(frame_id/total_frames)
