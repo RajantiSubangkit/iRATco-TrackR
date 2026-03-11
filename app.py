@@ -193,7 +193,6 @@ if uploaded_video and st.session_state.running:
         track["Xs"]=track["X"].rolling(5,center=True).mean()
         track["Ys"]=track["Y"].rolling(5,center=True).mean()
 
-        alpha = 0.2
 
         track["Xs"].fillna(track["X"],inplace=True)
         track["Ys"].fillna(track["Y"],inplace=True)
@@ -204,7 +203,7 @@ if uploaded_video and st.session_state.running:
             track["dy"]=track.Ys.diff()
 
             track["step_distance"]=np.sqrt(track.dx**2+track.dy**2)
-            movement_threshold = 2  # pixel
+            movement_threshold =  1  # pixel
 
             track.loc[track["step_distance"] < movement_threshold, "Xs"] = np.nan
             track.loc[track["step_distance"] < movement_threshold, "Ys"] = np.nan
