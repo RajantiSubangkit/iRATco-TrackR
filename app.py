@@ -63,8 +63,13 @@ if "paused" not in st.session_state:
     st.session_state.paused = False
 
 if uploaded_video:
-if st.button("Run Analysis"):
-    
+
+    if st.button("Run Analysis"):
+        tfile=tempfile.NamedTemporaryFile(delete=False)
+        tfile.write(uploaded_video.read())
+
+        cap=cv2.VideoCapture(tfile.name)
+        
     control_col1, control_col2= st.columns(2)
     with control_col1:
         if st.button("⏸ Pause"):
@@ -73,11 +78,6 @@ if st.button("Run Analysis"):
     with control_col2:
         if st.button("▶ Resume"):
             st.session_state.paused = False
-
-        tfile=tempfile.NamedTemporaryFile(delete=False)
-        tfile.write(uploaded_video.read())
-
-        cap=cv2.VideoCapture(tfile.name)
 
         total_frames=int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
