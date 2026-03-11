@@ -26,12 +26,23 @@ st.set_page_config(
 st.title("iRATco TrackR")
 
 uploaded_video = st.file_uploader("Upload your video")
+col1, col2, col3 = st.columns(3)
 
+with col1:
+    if st.button("▶ Start"):
+        st.session_state.running = True
+
+with col2:
+    if st.button("⏸ Pause"):
+        st.session_state.running = False
+
+with col3:
+    if st.button("⏹ Stop"):
+        st.session_state.running = False
 analysis_speed = st.selectbox(
     "Analysis Speed",
     ["1X","2X","4X","8X","20X"]
 )
-
 speed_map={
     "1X":1,
     "2X":2,
@@ -63,18 +74,6 @@ if "paused" not in st.session_state:
     st.session_state.paused = False
 
 if uploaded_video:
-
-    control_col1, control_col2 = st.columns(2)
-
-    with control_col1:
-        if st.button("⏸ Pause"):
-            st.session_state.paused = True
-
-    with control_col2:
-        if st.button("▶ Resume"):
-            st.session_state.paused = False
-
-
     if st.button("Run Analysis"):
 
         tfile = tempfile.NamedTemporaryFile(delete=False)
