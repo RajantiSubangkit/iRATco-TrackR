@@ -200,8 +200,6 @@ if uploaded_video:
 
                     fig1,ax1=plt.subplots()
                     ax1.plot(track.Xs,track.Ys,color="red")
-                    ax1.set_xlim(0,width)
-                    ax1.set_ylim(0,height)
                     ax1.set_aspect("equal")
                     ax1.set_title("Movement Trajectory")
                     traj_plot.pyplot(fig1)
