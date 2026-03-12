@@ -1,3 +1,4 @@
+from streamlit_image_coordinates import streamlit_image_coordinates
 import streamlit as st
 import cv2
 import numpy as np
