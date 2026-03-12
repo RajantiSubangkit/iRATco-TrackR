@@ -8,7 +8,6 @@ import tempfile
 import zipfile
 import io
 import time
-from streamlit_image_coordinates import streamlit_image_coordinates
 
 # PAGE CONFIG
 st.set_page_config(
@@ -27,51 +26,6 @@ with col2:
 
 uploaded_video = st.file_uploader("Upload your video")
 ######TAMBAHAN
-roi=None
-
-if uploaded_video:
-
-    tfile=tempfile.NamedTemporaryFile(delete=False)
-    tfile.write(uploaded_video.read())
-
-    cap=cv2.VideoCapture(tfile.name)
-    ret,frame=cap.read()
-
-    if ret:
-
-        st.subheader("Select Arena ROI")
-
-        point = streamlit_image_coordinates(frame)
-
-        if point is not None:
-
-            if "roi_points" not in st.session_state:
-                st.session_state.roi_points=[]
-
-            st.session_state.roi_points.append((point["x"],point["y"]))
-
-            if len(st.session_state.roi_points)==1:
-                st.info("Click BOTTOM RIGHT corner")
-
-            if len(st.session_state.roi_points)==2:
-
-                (x1,y1),(x2,y2)=st.session_state.roi_points
-
-                x=min(x1,x2)
-                y=min(y1,y2)
-                w=abs(x2-x1)
-                h=abs(y2-y1)
-
-                roi=(x,y,w,h)
-
-                st.session_state.roi=roi
-
-                st.success(f"ROI selected: {roi}")
-
-                preview=frame.copy()
-                cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
-
-                st.image(preview,channels="BGR",caption="Selected ROI")
 #############
 analysis_speed = st.selectbox(
     "Analysis Speed",
