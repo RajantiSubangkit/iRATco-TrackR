@@ -143,11 +143,14 @@ if uploaded_video and st.session_state.running:
     tfile=tempfile.NamedTemporaryFile(delete=False)
     tfile.write(uploaded_video.read())
 
-    cap=cv2.VideoCapture(tfile.name)
+    cap = cv2.VideoCapture(st.session_state.video_path)
 
     total_frames=int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    if "roi" in st.session_state:
+        width = st.session_state.roi[2]
+        height = st.session_state.roi[3]
     fps=cap.get(cv2.CAP_PROP_FPS)
 
     X=[]
@@ -210,7 +213,9 @@ if uploaded_video and st.session_state.running:
             break
 
         ret,frame=cap.read()
-        
+        if "roi" in st.session_state:
+            x,y,w,h = st.session_state.roi
+            frame = frame[y:y+h , x:x+w]
 
         if not ret:
             break
