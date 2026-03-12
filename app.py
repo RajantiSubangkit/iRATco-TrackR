@@ -8,6 +8,7 @@ import tempfile
 import zipfile
 import io
 import time
+from streamlit_image_coordinates import streamlit_image_coordinates
 
 # PAGE CONFIG
 st.set_page_config(
