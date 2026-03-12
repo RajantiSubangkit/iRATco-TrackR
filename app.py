@@ -27,7 +27,7 @@ with col2:
 
 uploaded_video = st.file_uploader("Upload your video")
 ######TAMBAHAN
-from streamlit_image_coordinates import streamlit_image_coordinates
+roi=None
 
 if uploaded_video:
 
@@ -37,31 +37,41 @@ if uploaded_video:
     cap=cv2.VideoCapture(tfile.name)
     ret,frame=cap.read()
 
-    st.subheader("Click TOP LEFT then BOTTOM RIGHT")
+    if ret:
 
-    point = streamlit_image_coordinates(frame)
+        st.subheader("Select Arena ROI")
 
-    if point:
+        point = streamlit_image_coordinates(frame)
 
-        if "roi_points" not in st.session_state:
-            st.session_state.roi_points=[]
+        if point is not None:
 
-        st.session_state.roi_points.append((point["x"],point["y"]))
+            if "roi_points" not in st.session_state:
+                st.session_state.roi_points=[]
 
-        if len(st.session_state.roi_points)==2:
+            st.session_state.roi_points.append((point["x"],point["y"]))
 
-            (x1,y1),(x2,y2)=st.session_state.roi_points
+            if len(st.session_state.roi_points)==1:
+                st.info("Click BOTTOM RIGHT corner")
 
-            roi = (
-                min(x1,x2),
-                min(y1,y2),
-                abs(x2-x1),
-                abs(y2-y1)
-            )
+            if len(st.session_state.roi_points)==2:
 
-            st.success(f"ROI selected: {roi}")
+                (x1,y1),(x2,y2)=st.session_state.roi_points
 
-            st.session_state.roi = roi
+                x=min(x1,x2)
+                y=min(y1,y2)
+                w=abs(x2-x1)
+                h=abs(y2-y1)
+
+                roi=(x,y,w,h)
+
+                st.session_state.roi=roi
+
+                st.success(f"ROI selected: {roi}")
+
+                preview=frame.copy()
+                cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
+
+                st.image(preview,channels="BGR",caption="Selected ROI")
 #############
 analysis_speed = st.selectbox(
     "Analysis Speed",
