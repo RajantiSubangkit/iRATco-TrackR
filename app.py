@@ -91,6 +91,7 @@ def detect_mouse(frame):
 
     return int(x),int(y)
 
+
 if uploaded_video and st.session_state.running:
 
     tfile=tempfile.NamedTemporaryFile(delete=False)
@@ -163,7 +164,7 @@ if uploaded_video and st.session_state.running:
             break
 
         ret,frame=cap.read()
-        
+
         if not ret:
             break
 
