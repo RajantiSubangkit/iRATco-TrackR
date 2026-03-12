@@ -132,7 +132,10 @@ if uploaded_video and st.session_state.running:
     heat_plot = spatial_col1.empty()
     zone_plot = spatial_col2.empty()
 
-    st.subheader("Directional Analysis")
+    st.markdown(
+    "<h2 style='text-align:center;'>Directional Analysis</h2>",
+    unsafe_allow_html=True
+    )
 
     dir_col1,dir_col2 = st.columns(2)
 
