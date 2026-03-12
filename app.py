@@ -118,7 +118,12 @@ if uploaded_video and st.session_state.running:
         neg_video = st.empty()
     
     progress=st.progress(0)
+    
 
+    st.markdown(
+    "<h2 style='text-align:center;'>Movement Analysis</h2>",
+    unsafe_allow_html=True
+    )
     col1,col2,col3=st.columns(3)
 
     traj_plot=col1.empty()
@@ -262,7 +267,7 @@ if uploaded_video and st.session_state.running:
                 fig1,ax1=plt.subplots()
                 ax1.plot(track.Xs,track.Ys,color="red")
                 ax1.set_aspect("equal")
-                ax1.set_title("Movement Trajectory")
+                ax1.set_title("Trajectory")
                 traj_plot.pyplot(fig1)
                 plt.close(fig1)
 
