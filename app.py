@@ -316,11 +316,11 @@ if uploaded_video and st.session_state.running:
                 plt.close(fig7)
 
                 metrics_df = pd.DataFrame([{
-                    "Mean velocity": round(mean_velocity,2),
+                    "Mean velocity (mm/s)": round(mean_velocity,2),
                     "Anxiety index": round(anxiety_index,2),
                     "Freezing time (s)": round(freezing_time,2),
                     "Exploration index": round(exploration_index,2),
-                    "Total Distance": round(total_distance,2),
+                    "Total Distance (mm)": round(total_distance,2),
                     "Total Time (s)": round(total_time,2)
                 }])
 
@@ -362,7 +362,7 @@ if uploaded_video and st.session_state.running:
     csv = track.to_csv(index=False)
 
     st.download_button(
-        label="Download tracking data (CSV)",
+        label="Download Tracking Data (CSV)",
         data=csv,
         file_name="tracking_data.csv",
         mime="text/csv"
@@ -372,7 +372,7 @@ st.markdown("---")
 
 st.markdown("""
 © 2026 Mawar Subangkit  
-Mouse Behavioral Tracking Software  
+**Mouse Behavioral Tracking Software**  
 
 If you use this software, please cite:
 
