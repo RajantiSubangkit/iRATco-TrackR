@@ -25,8 +25,7 @@ with col2:
     st.image("logo_iratco.png", width=250)
 
 uploaded_video = st.file_uploader("Upload your video")
-######TAMBAHAN
-#############
+
 analysis_speed = st.selectbox(
     "Analysis Speed",
     ["1X","2X","4X","8X","20X"]
