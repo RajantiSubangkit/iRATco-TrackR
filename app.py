@@ -25,7 +25,43 @@ with col2:
     st.image("logo_iratco.png", width=250)
 
 uploaded_video = st.file_uploader("Upload your video")
+######TAMBAHAN
+from streamlit_image_coordinates import streamlit_image_coordinates
 
+if uploaded_video:
+
+    tfile=tempfile.NamedTemporaryFile(delete=False)
+    tfile.write(uploaded_video.read())
+
+    cap=cv2.VideoCapture(tfile.name)
+    ret,frame=cap.read()
+
+    st.subheader("Click TOP LEFT then BOTTOM RIGHT")
+
+    point = streamlit_image_coordinates(frame)
+
+    if point:
+
+        if "roi_points" not in st.session_state:
+            st.session_state.roi_points=[]
+
+        st.session_state.roi_points.append((point["x"],point["y"]))
+
+        if len(st.session_state.roi_points)==2:
+
+            (x1,y1),(x2,y2)=st.session_state.roi_points
+
+            roi = (
+                min(x1,x2),
+                min(y1,y2),
+                abs(x2-x1),
+                abs(y2-y1)
+            )
+
+            st.success(f"ROI selected: {roi}")
+
+            st.session_state.roi = roi
+#############
 analysis_speed = st.selectbox(
     "Analysis Speed",
     ["1X","2X","4X","8X","20X"]
