@@ -26,7 +26,52 @@ with col2:
     st.image("logo_iratco.png", width=250)
 
 uploaded_video = st.file_uploader("Upload your video")
+#####selector
+# ROI selection
+roi = None
 
+if uploaded_video and "roi" not in st.session_state:
+
+    tfile = tempfile.NamedTemporaryFile(delete=False)
+    tfile.write(uploaded_video.read())
+
+    st.session_state.video_path = tfile.name
+
+    cap = cv2.VideoCapture(st.session_state.video_path)
+    ret, frame = cap.read()
+
+    if ret:
+
+        st.subheader("Select ROI (click TOP LEFT then BOTTOM RIGHT)")
+
+        point = streamlit_image_coordinates(frame)
+
+        if point is not None:
+
+            if "roi_points" not in st.session_state:
+                st.session_state.roi_points = []
+
+            st.session_state.roi_points.append((point["x"], point["y"]))
+
+            if len(st.session_state.roi_points) == 1:
+                st.info("Click BOTTOM RIGHT corner")
+
+            if len(st.session_state.roi_points) == 2:
+
+                (x1,y1),(x2,y2)=st.session_state.roi_points
+
+                x=min(x1,x2)
+                y=min(y1,y2)
+                w=abs(x2-x1)
+                h=abs(y2-y1)
+
+                st.session_state.roi=(x,y,w,h)
+
+                preview=frame.copy()
+                cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
+
+                st.image(preview,channels="BGR",caption="Selected ROI")
+######
 analysis_speed = st.selectbox(
     "Analysis Speed",
     ["1X","2X","4X","8X","20X"]
@@ -165,6 +210,7 @@ if uploaded_video and st.session_state.running:
             break
 
         ret,frame=cap.read()
+        
 
         if not ret:
             break
