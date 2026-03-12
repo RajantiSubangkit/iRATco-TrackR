@@ -125,7 +125,10 @@ if uploaded_video and st.session_state.running:
     dist_plot=col2.empty()
     vel_plot=col3.empty()
 ###
-    st.subheader("Spatial Behaviour")
+    st.markdown(
+    "<h2 style='text-align:center;'>Spatial Behaviour</h2>",
+    unsafe_allow_html=True
+    )
 
     spatial_col1, spatial_col2 = st.columns(2)
 
