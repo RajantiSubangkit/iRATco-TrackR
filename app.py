@@ -8,7 +8,6 @@ import tempfile
 import zipfile
 import io
 import time
-from streamlit_drawable_canvas import st_canvas
 
 # PAGE CONFIG
 st.set_page_config(
@@ -92,48 +91,6 @@ def detect_mouse(frame):
 
     return int(x),int(y)
 
-roi=None
-
-if uploaded_video:
-
-    tfile=tempfile.NamedTemporaryFile(delete=False)
-    tfile.write(uploaded_video.read())
-
-    cap=cv2.VideoCapture(tfile.name)
-    ret,frame=cap.read()
-
-    if ret:
-
-        st.subheader("Select Arena ROI")
-
-        canvas_result = st_canvas(
-            fill_color="rgba(255, 0, 0, 0.3)",
-            stroke_width=2,
-            stroke_color="red",
-            background_image=frame,
-            update_streamlit=True,
-            height=frame.shape[0],
-            width=frame.shape[1],
-            drawing_mode="rect",
-            key="canvas"
-        )
-
-        if canvas_result.json_data is not None:
-            objects = canvas_result.json_data["objects"]
-
-            if len(objects)>0:
-
-                rect=objects[-1]
-
-                x=int(rect["left"])
-                y=int(rect["top"])
-                w=int(rect["width"])
-                h=int(rect["height"])
-
-                roi=(x,y,w,h)
-
-                st.success(f"ROI selected: {roi}")
-
 if uploaded_video and st.session_state.running:
 
     tfile=tempfile.NamedTemporaryFile(delete=False)
@@ -207,10 +164,6 @@ if uploaded_video and st.session_state.running:
 
         ret,frame=cap.read()
         
-        if roi is not None:
-            x,y,w,h=roi
-            frame=frame[y:y+h, x:x+w]
-
         if not ret:
             break
 
@@ -219,9 +172,6 @@ if uploaded_video and st.session_state.running:
             continue
 
         x,y=detect_mouse(frame)
-        if roi is not None and x is not None:
-            x = x + roi[0]
-            y = y + roi[1]
 
         X.append(x)
         Y.append(y)
