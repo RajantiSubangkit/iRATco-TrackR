@@ -85,7 +85,7 @@ if uploaded_video and "roi" not in st.session_state:
                         st.subheader("Selected ROI")
                         st.image(preview,channels="BGR")
 
-    cap_preview.release()
+                        cap_preview.release()
 ######
 analysis_speed = st.selectbox(
     "Analysis Speed",
