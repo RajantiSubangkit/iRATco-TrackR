@@ -103,7 +103,12 @@ if uploaded_video:
             if "roi" in st.session_state:
                 x,y,w,h = st.session_state.roi
                 preview = display_frame.copy()
-                cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
+                x_disp = int(x * scale)
+                y_disp = int(y * scale)
+                w_disp = int(w * scale)
+                h_disp = int(h * scale)
+
+                cv2.rectangle(preview,(x_disp,y_disp),(x_disp+w_disp,y_disp+h_disp),(0,255,0),3)
                 st.image(preview,channels="BGR",caption="Selected ROI",width=display_frame.shape[1])
 
                 
