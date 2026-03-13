@@ -65,11 +65,7 @@ if uploaded_video and "roi" not in st.session_state:
             point = streamlit_image_coordinates(frame)
 
         with col2:
-            if "roi" in st.session_state:
-                x,y,w,h = st.session_state.roi
-                preview = frame.copy()
-                cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
-                st.image(preview, channels="BGR", caption="Selected ROI")
+            preview_placeholder = st.empty()
 
         if point is not None:
 
@@ -91,6 +87,14 @@ if uploaded_video and "roi" not in st.session_state:
                 h=abs(y2-y1)
 
                 st.session_state.roi=(x,y,w,h)
+                preview = frame.copy()
+                cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
+
+                preview_placeholder.image(
+                    preview,
+                    channels="BGR",
+                    caption="Selected ROI"
+                )
 
                 
 ######
