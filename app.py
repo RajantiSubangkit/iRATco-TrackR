@@ -256,8 +256,12 @@ if uploaded_video and st.session_state.running:
 
         x,y=detect_mouse(frame)
 
-        X.append(x)
-        Y.append(y)
+        if x is not None and y is not None:
+            X.append(x)
+            Y.append(y)
+        else:
+            X.append(np.nan)
+            Y.append(np.nan)
 
         neg_frame = negative_mouse_view(frame)
 
