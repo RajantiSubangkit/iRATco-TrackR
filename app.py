@@ -304,8 +304,9 @@ if uploaded_video and st.session_state.running:
             cv2.circle(frame,(x,y),6,(0,0,255),-1)
             cv2.circle(neg_frame,(x,y),6,(255,0,0),-1)
             
-        raw_video.image(frame, channels="BGR")
-        neg_video.image(neg_frame, channels="BGR")
+        if frame_id % 3 == 0:    
+            raw_video.image(frame, channels="BGR")
+            neg_video.image(neg_frame, channels="BGR")
 
         track=pd.DataFrame({"X":X,"Y":Y})
 
