@@ -59,7 +59,17 @@ if uploaded_video and "roi" not in st.session_state:
 
         st.subheader("Select ROI (click TOP LEFT then BOTTOM RIGHT)")
 
-        point = streamlit_image_coordinates(frame)
+        col1, col2 = st.columns(2)
+
+        with col1:
+            point = streamlit_image_coordinates(frame)
+
+        with col2:
+            if "roi" in st.session_state:
+                x,y,w,h = st.session_state.roi
+                preview = frame.copy()
+                cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
+                st.image(preview, channels="BGR", caption="Selected ROI")
 
         if point is not None:
 
@@ -82,10 +92,7 @@ if uploaded_video and "roi" not in st.session_state:
 
                 st.session_state.roi=(x,y,w,h)
 
-                preview=frame.copy()
-                cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
-
-                st.image(preview,channels="BGR",caption="Selected ROI")
+                
 ######
 analysis_speed = st.selectbox(
     "Analysis Speed",
