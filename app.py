@@ -87,6 +87,15 @@ if uploaded_video and "roi" not in st.session_state:
                 h=abs(y2-y1)
 
                 st.session_state.roi=(x,y,w,h)
+                if "roi" in st.session_state:
+
+                    if st.button("Reset ROI"):
+
+                        for key in ["roi", "roi_points"]:
+                            if key in st.session_state:
+                                del st.session_state[key]
+
+                        st.rerun()
                 preview = frame.copy()
                 cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
 
