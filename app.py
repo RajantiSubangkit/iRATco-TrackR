@@ -74,7 +74,7 @@ if uploaded_video:
         col1, col2 = st.columns(2)
 
         with col1:
-            point = streamlit_image_coordinates(frame)
+            point = streamlit_image_coordinates(frame,use_column_width=True)
 
         if point is not None and len(st.session_state.roi_points) < 2:
             st.session_state.roi_points.append((point["x"], point["y"]))
@@ -98,7 +98,7 @@ if uploaded_video:
                 x,y,w,h = st.session_state.roi
                 preview = frame.copy()
                 cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
-                st.image(preview, channels="BGR", caption="Selected ROI", use_container_width=True)
+                st.image(preview,channels="BGR",caption="Selected ROI",use_container_width=True)
 
                 
 ######
