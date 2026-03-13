@@ -28,10 +28,19 @@ with col2:
 uploaded_video = st.file_uploader("Upload your video")
 # reset ROI if new video uploaded
 if uploaded_video is not None:
-    # reset ROI every time a new file is uploaded
-    for key in ["roi", "roi_points", "video_path"]:
-        if key in st.session_state:
-            del st.session_state[key]
+
+    if "last_video" not in st.session_state:
+        st.session_state.last_video = uploaded_video.name
+
+    if uploaded_video.name != st.session_state.last_video:
+
+        st.session_state.last_video = uploaded_video.name
+
+        if "roi" in st.session_state:
+            del st.session_state["roi"]
+
+        if "roi_points" in st.session_state:
+            del st.session_state["roi_points"]
 #####selector
 # ROI selection
 roi = None
