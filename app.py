@@ -275,7 +275,7 @@ if uploaded_video and st.session_state.running:
             w=min(w_frame-x,w)
             h=min(h_frame-y,h)
 
-            frame = frame[y:y+h , x:x+w]
+        frame = frame[y:y+h , x:x+w]
 
         if frame_id % skip !=0:
             frame_id+=1
