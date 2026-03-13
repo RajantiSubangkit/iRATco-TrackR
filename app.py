@@ -26,6 +26,15 @@ with col2:
     st.image("logo_iratco.png", width=250)
 
 uploaded_video = st.file_uploader("Upload your video")
+if uploaded_video:
+
+    if st.button("Reset ROI"):
+
+        for key in ["roi","roi_points"]:
+            if key in st.session_state:
+                del st.session_state[key]
+
+        st.rerun()
 # reset ROI if new video uploaded
 if uploaded_video is not None:
 
@@ -45,7 +54,7 @@ if uploaded_video is not None:
 # ROI selection
 roi = None
 
-if uploaded_video and "roi" not in st.session_state:
+if uploaded_video:
 
     tfile = tempfile.NamedTemporaryFile(delete=False)
     tfile.write(uploaded_video.read())
@@ -88,12 +97,6 @@ if uploaded_video and "roi" not in st.session_state:
 
                 st.session_state.roi=(x,y,w,h)
                 if "roi" in st.session_state:
-
-                    if st.button("Reset ROI"):
-
-                        for key in ["roi", "roi_points"]:
-                            if key in st.session_state:
-                                del st.session_state[key]
 
                         st.rerun()
                 preview = frame.copy()
