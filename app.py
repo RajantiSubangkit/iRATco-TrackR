@@ -73,17 +73,17 @@ if uploaded_video and "roi" not in st.session_state:
                 st.image(preview,channels="BGR",caption="Selected ROI")
                 if "roi" in st.session_state and uploaded_video:
 
-                cap_preview = cv2.VideoCapture(st.session_state.video_path)
-                ret_preview, frame_preview = cap_preview.read()
+                    cap_preview = cv2.VideoCapture(st.session_state.video_path)
+                    ret_preview, frame_preview = cap_preview.read()
 
-                if ret_preview:
-                    x,y,w,h = st.session_state.roi
+                    if ret_preview:
+                        x,y,w,h = st.session_state.roi
 
-                    preview = frame_preview.copy()
-                    cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
+                        preview = frame_preview.copy()
+                        cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
 
-                    st.subheader("Selected ROI")
-                    st.image(preview,channels="BGR")
+                        st.subheader("Selected ROI")
+                        st.image(preview,channels="BGR")
 
     cap_preview.release()
 ######
