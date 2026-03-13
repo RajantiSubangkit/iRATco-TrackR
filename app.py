@@ -83,7 +83,7 @@ if uploaded_video:
         if point is not None and len(st.session_state.roi_points) < 2:
             real_x = int(point["x"] / scale)
             real_y = int(point["y"] / scale)
-            st.session_state.roi_points.append(real_x, real_y))
+            st.session_state.roi_points.append((real_x, real_y))
 
         if len(st.session_state.roi_points) == 1 and "roi" not in st.session_state:
             st.info("Click BOTTOM RIGHT corner")
