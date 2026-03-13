@@ -62,8 +62,9 @@ if uploaded_video:
 
     cap = cv2.VideoCapture(st.session_state.video_path)
     ret, frame = cap.read()
+    
     cap.release()
-    display_width = 700
+    display_width = 500
     scale = display_width / frame.shape[1]
     display_height = int(frame.shape[0] * scale)
 
@@ -253,13 +254,36 @@ if uploaded_video and st.session_state.running:
         if not st.session_state.running:
             break
 
-        ret,frame=cap.read()
-        if "roi" in st.session_state:
-            x,y,w,h = st.session_state.roi
-            frame = frame[y:y+h , x:x+w]
+        ret, frame = cap.read()
 
-        if not ret:
+        # jika frame gagal dibaca
+        if not ret or frame is None:
             break
+
+        # crop ROI setelah frame valid
+        if "roi" in st.session_state and st.session_state.roi:
+
+            x, y, w, h = st.session_state.roi
+
+            x = int(x)
+            y = int(y)
+            w = int(w)
+            h = int(h)
+
+            h_frame, w_frame = frame.shape[:2]
+
+            # pastikan ROI tidak keluar frame
+            x = max(0, x)
+            y = max(0, y)
+            w = min(w_frame - x, w)
+            h = min(h_frame - y, h)
+
+            frame = frame[y:y+h, x:x+w]
+
+            # jika crop menghasilkan frame kosong
+            if frame.size == 0:
+                frame_id += 1
+                continue
 
         if frame_id % skip !=0:
             frame_id+=1
@@ -280,8 +304,9 @@ if uploaded_video and st.session_state.running:
             cv2.circle(frame,(x,y),6,(0,0,255),-1)
             cv2.circle(neg_frame,(x,y),6,(255,0,0),-1)
 
-        raw_video.image(frame, channels="BGR")
-        neg_video.image(neg_frame, channels="BGR")
+        if frame_id % 3 == 0:
+            raw_video.image(frame, channels="BGR")
+            neg_video.image(neg_frame, channels="BGR")
 
         track=pd.DataFrame({"X":X,"Y":Y})
 
