@@ -74,7 +74,7 @@ if uploaded_video:
         col1, col2 = st.columns(2)
 
         with col1:
-            point = streamlit_image_coordinates(frame,use_column_width=True)
+            point = streamlit_image_coordinates(frame)
 
         if point is not None and len(st.session_state.roi_points) < 2:
             st.session_state.roi_points.append((point["x"], point["y"]))
