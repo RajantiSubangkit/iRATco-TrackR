@@ -63,7 +63,11 @@ if uploaded_video:
     cap = cv2.VideoCapture(st.session_state.video_path)
     ret, frame = cap.read()
     cap.release()
+    display_width = 700
+    scale = display_width / frame.shape[1]
+    display_height = int(frame.shape[0] * scale)
 
+    display_frame = cv2.resize(frame, (display_width, display_height))
     if ret:
 
         st.subheader("Select ROI (click TOP LEFT then BOTTOM RIGHT)")
@@ -74,10 +78,12 @@ if uploaded_video:
         col1, col2 = st.columns(2)
 
         with col1:
-            point = streamlit_image_coordinates(frame)
+            point = streamlit_image_coordinates(display_frame)
 
         if point is not None and len(st.session_state.roi_points) < 2:
-            st.session_state.roi_points.append((point["x"], point["y"]))
+            real_x = int(point["x"] / scale)
+            real_y = int(point["y"] / scale)
+            st.session_state.roi_points.append(real_x, real_y))
 
         if len(st.session_state.roi_points) == 1 and "roi" not in st.session_state:
             st.info("Click BOTTOM RIGHT corner")
@@ -96,9 +102,9 @@ if uploaded_video:
         with col2:
             if "roi" in st.session_state:
                 x,y,w,h = st.session_state.roi
-                preview = frame.copy()
+                preview = display_frame.copy()
                 cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
-                st.image(preview,channels="BGR",caption="Selected ROI",width=frame.shape[1])
+                st.image(preview,channels="BGR",caption="Selected ROI",width=display_frame.shape[1])
 
                 
 ######
