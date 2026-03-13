@@ -465,16 +465,6 @@ if uploaded_video and st.session_state.running:
             progress.progress(frame_id/total_frames)
 
     cap.release()
-    st.success("Analysis complete")
-
-    csv = track.to_csv(index=False)
-
-    st.download_button(
-        label="Download Tracking Data (CSV)",
-        data=csv,
-        file_name="tracking_data.csv",
-        mime="text/csv"
-    )
 
 st.markdown("---")
 
