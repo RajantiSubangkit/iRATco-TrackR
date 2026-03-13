@@ -253,29 +253,13 @@ if uploaded_video and st.session_state.running:
         if not st.session_state.running:
             break
 
-            ret,frame=cap.read()
-            ret,frame = cap.read()
+        ret,frame=cap.read()
+        if "roi" in st.session_state:
+            x,y,w,h = st.session_state.roi
+            frame = frame[y:y+h , x:x+w]
 
         if not ret:
             break
-
-        if "roi" in st.session_state:
-
-            x,y,w,h = st.session_state.roi
-
-            x=int(x)
-            y=int(y)
-            w=int(w)
-            h=int(h)
-
-            h_frame, w_frame = frame.shape[:2]
-
-            x=max(0,x)
-            y=max(0,y)
-            w=min(w_frame-x,w)
-            h=min(h_frame-y,h)
-
-        frame = frame[y:y+h , x:x+w]
 
         if frame_id % skip !=0:
             frame_id+=1
