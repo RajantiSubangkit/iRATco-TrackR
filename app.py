@@ -98,7 +98,7 @@ if uploaded_video:
                 x,y,w,h = st.session_state.roi
                 preview = frame.copy()
                 cv2.rectangle(preview,(x,y),(x+w,y+h),(0,255,0),3)
-                st.image(preview,channels="BGR",caption="Selected ROI",use_container_width=True)
+                st.image(preview,channels="BGR",caption="Selected ROI",width=frame.shape[1])
 
                 
 ######
