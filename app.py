@@ -21,7 +21,7 @@ st.set_page_config(
 col1, col2 = st.columns([8, 2])
 with col1:
     st.title("iRATco TrackR")
-    st.markdown("<span style='font-size:16px;color:gray;'>**version 1.1.3**</span>", unsafe_allow_html=True)
+    st.markdown("<span style='font-size:16px;color:gray;'>**version 1.2.1**</span>", unsafe_allow_html=True)
 with col2:
     st.image("logo_iratco.png", width=250)
 
@@ -456,27 +456,35 @@ if uploaded_video and st.session_state.running:
                 vel_plot.pyplot(fig3)
                 plt.close(fig3)
 
-                # heatmap
+                # dwell time heatmap
                 if len(track) > 20:
-                    fig4, ax4 = plt.subplots()
                     heat_data = track[["Xs", "Ys"]].dropna()
 
-                    if len(heat_data) > 20 and heat_data["Xs"].nunique() > 1 and heat_data["Ys"].nunique() > 1:
-                        try:
-                            sns.kdeplot(
-                                x=heat_data["Xs"],
-                                y=heat_data["Ys"],
-                                fill=True,
-                                cmap="RdYlGn_r",
-                                ax=ax4
-                            )
-                        except Exception:
-                            ax4.scatter(heat_data["Xs"], heat_data["Ys"], s=5)
+                    if len(heat_data) > 0:
+                        dwell_weights = np.full(len(heat_data), dt)
 
-                    ax4.set_aspect("equal")
-                    ax4.set_title("Dwell Time Heatmap")
-                    heat_plot.pyplot(fig4)
-                    plt.close(fig4)
+                        x_edges = np.linspace(0, width, 51)
+                        y_edges = np.linspace(0, height, 51)
+
+                        heatmap, _, _ = np.histogram2d(
+                            heat_data["Xs"],
+                            heat_data["Ys"],
+                            bins=[x_edges, y_edges],
+                            weights=dwell_weights
+                        )
+
+                        fig4, ax4 = plt.subplots()
+                        im = ax4.imshow(
+                            heatmap.T,
+                            origin="lower",
+                            extent=[0, width, 0, height],
+                            aspect="equal",
+                            cmap="RdYlGn_r"
+                        )
+                        ax4.set_title("Dwell Time Heatmap (s)")
+                        fig4.colorbar(im, ax=ax4, label="Time spent (s)")
+                        heat_plot.pyplot(fig4)
+                        plt.close(fig4)
 
                 # absolute bearing
                 bins = np.linspace(-180, 180, 24)
