@@ -63,22 +63,40 @@ if uploaded_video:
     cap = cv2.VideoCapture(st.session_state.video_path)
     ret, frame = cap.read()
     cap.release()
-    display_width = 300
-    scale = display_width / frame.shape[1]
-    display_height = int(frame.shape[0] * scale)
 
-    display_frame = cv2.resize(frame, (display_width, display_height))
     if ret:
+        display_width = 300
+        scale = display_width / frame.shape[1]
+        display_height = int(frame.shape[0] * scale)
+
+        display_frame = cv2.resize(frame, (display_width, display_height))
 
         st.subheader("Select ROI (click TOP LEFT then BOTTOM RIGHT)")
 
         if "roi_points" not in st.session_state:
             st.session_state.roi_points = []
 
-        col1, col2 = st.columns(2)
+        # buat frame tampilan untuk ROI
+        roi_display = display_frame.copy()
 
-        with col1:
-            point = streamlit_image_coordinates(display_frame)
+        # kalau ROI sudah ada, gambar kotaknya langsung di frame awal
+        if "roi" in st.session_state:
+            x, y, w, h = st.session_state.roi
+            x_disp = int(x * scale)
+            y_disp = int(y * scale)
+            w_disp = int(w * scale)
+            h_disp = int(h * scale)
+
+            cv2.rectangle(
+                roi_display,
+                (x_disp, y_disp),
+                (x_disp + w_disp, y_disp + h_disp),
+                (0, 255, 0),
+                3
+            )
+
+        # tampilkan frame yang bisa diklik
+        point = streamlit_image_coordinates(roi_display)
 
         if point is not None and len(st.session_state.roi_points) < 2:
             real_x = int(point["x"] / scale)
@@ -89,27 +107,16 @@ if uploaded_video:
             st.info("Click BOTTOM RIGHT corner")
 
         if len(st.session_state.roi_points) == 2 and "roi" not in st.session_state:
+            (x1, y1), (x2, y2) = st.session_state.roi_points
 
-            (x1,y1),(x2,y2) = st.session_state.roi_points
+            x = min(x1, x2)
+            y = min(y1, y2)
+            w = abs(x2 - x1)
+            h = abs(y2 - y1)
 
-            x=min(x1,x2)
-            y=min(y1,y2)
-            w=abs(x2-x1)
-            h=abs(y2-y1)
+            st.session_state.roi = (x, y, w, h)
+            st.rerun()
 
-            st.session_state.roi=(x,y,w,h)
-
-        with col2:
-            if "roi" in st.session_state:
-                x,y,w,h = st.session_state.roi
-                preview = display_frame.copy()
-                x_disp = int(x * scale)
-                y_disp = int(y * scale)
-                w_disp = int(w * scale)
-                h_disp = int(h * scale)
-
-                cv2.rectangle(preview,(x_disp,y_disp),(x_disp+w_disp,y_disp+h_disp),(0,255,0),3)
-                st.image(preview,channels="BGR",caption="Selected ROI",width=display_frame.shape[1])
 
                 
 ######
