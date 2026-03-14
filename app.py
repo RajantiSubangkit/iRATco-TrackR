@@ -385,7 +385,7 @@ if uploaded_video and st.session_state.running:
             total_distance=track["cumulative_distance"].iloc[-1]
             total_time=len(track)/fps
 
-            if frame_id % 50==0:
+            if frame_id % 20==0:
 
                 fig1,ax1=plt.subplots()
                 ax1.plot(track.Xs,track.Ys,color="red")
