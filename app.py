@@ -154,6 +154,13 @@ speed_map = {
 
 skip = speed_map[analysis_speed]
 
+# object contrast selection
+contrast_mode = st.radio(
+    "Object Type",
+    ["Bright object", "Dark object"],
+    horizontal=True
+)
+
 # SESSION STATE
 if "running" not in st.session_state:
     st.session_state.running = False
@@ -182,13 +189,16 @@ def negative_mouse_view(frame):
     # invert background
     inv = cv2.bitwise_not(gray)
 
-    # threshold tikus
-    _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+    # threshold sesuai tipe objek
+    if contrast_mode == "Bright object":
+        _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+    else:
+        _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
 
     # ubah background jadi BGR
     neg_frame = cv2.cvtColor(inv, cv2.COLOR_GRAY2BGR)
 
-    # warnai tikus merah
+    # warnai objek merah
     neg_frame[mask > 0] = [0, 0, 255]
 
     return neg_frame
@@ -196,7 +206,10 @@ def negative_mouse_view(frame):
 def detect_mouse(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+    if contrast_mode == "Bright object":
+        _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+    else:
+        _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
 
     coords = np.column_stack(np.where(mask > 0))
 
@@ -372,7 +385,7 @@ if uploaded_video and st.session_state.running:
             if "pixel_to_mm" in st.session_state:
                 track["step_distance"] = track["step_distance"] * st.session_state.pixel_to_mm
 
-            movement_threshold = 0.3  # pixel
+            movement_threshold = 0.3
             track.loc[track["step_distance"] < movement_threshold, "Xs"] = np.nan
             track.loc[track["step_distance"] < movement_threshold, "Ys"] = np.nan
 
