@@ -437,10 +437,25 @@ if uploaded_video and st.session_state.running:
             total_time = len(track) * dt
 
             if frame_id % 20 == 0:
+                # Movement Trajectory = frequency visit heatmap seperti semula
                 fig1, ax1 = plt.subplots()
-                ax1.plot(track.Xs, track.Ys, color="red")
+                traj_data = track[["Xs", "Ys"]].dropna()
+
+                if len(traj_data) > 20 and traj_data["Xs"].nunique() > 1 and traj_data["Ys"].nunique() > 1:
+                    try:
+                        sns.kdeplot(
+                            x=traj_data["Xs"],
+                            y=traj_data["Ys"],
+                            fill=True,
+                            cmap="RdYlGn_r",
+                            ax=ax1
+                        )
+                    except Exception:
+                        ax1.scatter(traj_data["Xs"], traj_data["Ys"], s=5, color="red")
+
+                ax1.plot(track["Xs"], track["Ys"], color="black", alpha=0.35, linewidth=1)
                 ax1.set_aspect("equal")
-                ax1.set_title("Trajectory")
+                ax1.set_title("Movement Trajectory")
                 traj_plot.pyplot(fig1)
                 plt.close(fig1)
 
@@ -456,15 +471,13 @@ if uploaded_video and st.session_state.running:
                 vel_plot.pyplot(fig3)
                 plt.close(fig3)
 
-                # dwell time heatmap
+                # Dwell Time Movement Trajectory
                 if len(track) > 20:
                     heat_data = track[["Xs", "Ys"]].dropna()
 
                     if len(heat_data) > 0:
-                    # setiap titik menyumbang waktu dt
                         dwell_weights = np.full(len(heat_data), dt)
 
-                    # resolusi heatmap
                         n_bins = 60
                         x_edges = np.linspace(0, width, n_bins + 1)
                         y_edges = np.linspace(0, height, n_bins + 1)
@@ -476,10 +489,8 @@ if uploaded_video and st.session_state.running:
                             weights=dwell_weights
                         )
 
-                        # smooth supaya area dwell menyebar dan tidak cuma titik
                         heatmap_smooth = cv2.GaussianBlur(heatmap, (0, 0), sigmaX=2.5, sigmaY=2.5)
 
-                        # custom colormap: putih -> hijau -> kuning -> merah
                         from matplotlib.colors import LinearSegmentedColormap
                         dwell_cmap = LinearSegmentedColormap.from_list(
                             "dwell_cmap",
@@ -497,10 +508,8 @@ if uploaded_video and st.session_state.running:
                             interpolation="bilinear"
                         )
 
-                        # overlay trajectory
                         ax4.plot(track["Xs"], track["Ys"], color="black", alpha=0.35, linewidth=1)
-
-                        ax4.set_title("Movement Trajectory")
+                        ax4.set_title("Dwell Time Movement Trajectory")
                         ax4.set_xlabel("X")
                         ax4.set_ylabel("Y")
 
