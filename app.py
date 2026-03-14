@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # HEADER
-col1, col2 = st.columns([8,2])
+col1, col2 = st.columns([8, 2])
 with col1:
     st.title("iRATco TrackR")
     st.markdown("<span style='font-size:16px;color:gray;'>version 1.1.0</span>", unsafe_allow_html=True)
@@ -26,38 +26,35 @@ with col2:
     st.image("logo_iratco.png", width=250)
 
 uploaded_video = st.file_uploader("Upload your video")
+
 if uploaded_video:
-
     if st.button("Reset ROI"):
-
-        for key in ["roi","roi_points"]:
+        for key in ["roi", "roi_points", "pixel_to_mm", "real_roi_width_mm"]:
             if key in st.session_state:
                 del st.session_state[key]
-
         st.rerun()
+
 # reset ROI if new video uploaded
 if uploaded_video is not None:
-
     if "last_video" not in st.session_state:
         st.session_state.last_video = uploaded_video.name
 
     if uploaded_video.name != st.session_state.last_video:
-
         st.session_state.last_video = uploaded_video.name
 
-        if "roi" in st.session_state:
-            del st.session_state["roi"]
+        for key in ["roi", "roi_points", "pixel_to_mm", "real_roi_width_mm"]:
+            if key in st.session_state:
+                del st.session_state[key]
 
-        if "roi_points" in st.session_state:
-            del st.session_state["roi_points"]
-#####selector
+##### selector
 # ROI selection
 roi = None
 
 if uploaded_video:
-
+    # simpan video ke temp file sekali saja
+    video_bytes = uploaded_video.getvalue()
     tfile = tempfile.NamedTemporaryFile(delete=False)
-    tfile.write(uploaded_video.read())
+    tfile.write(video_bytes)
     st.session_state.video_path = tfile.name
 
     cap = cv2.VideoCapture(st.session_state.video_path)
@@ -76,10 +73,8 @@ if uploaded_video:
         if "roi_points" not in st.session_state:
             st.session_state.roi_points = []
 
-        # buat frame tampilan untuk ROI
         roi_display = display_frame.copy()
 
-        # kalau ROI sudah ada, gambar kotaknya langsung di frame awal
         if "roi" in st.session_state:
             x, y, w, h = st.session_state.roi
             x_disp = int(x * scale)
@@ -95,7 +90,6 @@ if uploaded_video:
                 3
             )
 
-        # tampilkan frame yang bisa diklik
         point = streamlit_image_coordinates(roi_display)
 
         if point is not None and len(st.session_state.roi_points) < 2:
@@ -117,92 +111,117 @@ if uploaded_video:
             st.session_state.roi = (x, y, w, h)
             st.rerun()
 
+        # =========================
+        # Calibration input
+        # =========================
+        if "roi" in st.session_state:
+            x, y, w, h = st.session_state.roi
 
-                
+            st.subheader("Spatial Calibration")
+
+            cal_col1, cal_col2 = st.columns(2)
+
+            with cal_col1:
+                st.write(f"ROI width (pixels): {w}")
+
+            with cal_col2:
+                real_roi_width_mm = st.number_input(
+                    "Real length of ROI width (mm)",
+                    min_value=0.0,
+                    value=float(st.session_state.get("real_roi_width_mm", 500.0)),
+                    step=10.0
+                )
+
+            st.session_state.real_roi_width_mm = real_roi_width_mm
+
+            if w > 0 and real_roi_width_mm > 0:
+                st.session_state.pixel_to_mm = real_roi_width_mm / w
+                st.write(f"Scale: {st.session_state.pixel_to_mm:.4f} mm/pixel")
+
 ######
 analysis_speed = st.selectbox(
     "Analysis Speed",
-    ["1X","2X","4X","8X","20X"]
+    ["1X", "2X", "4X", "8X", "20X"]
 )
 
-speed_map={
-    "1X":1,
-    "2X":2,
-    "4X":4,
-    "8X":8,
-    "20X":20
+speed_map = {
+    "1X": 1,
+    "2X": 2,
+    "4X": 4,
+    "8X": 8,
+    "20X": 20
 }
 
-skip=speed_map[analysis_speed]
+skip = speed_map[analysis_speed]
 
 # SESSION STATE
 if "running" not in st.session_state:
-    st.session_state.running=False
+    st.session_state.running = False
 
 # CONTROL BUTTONS
-c1,c2=st.columns(2)
+c1, c2 = st.columns(2)
 
 with c1:
     if st.button("▶ Run Analysis"):
-        st.session_state.running=True
-        st.session_state.paused=False
+        if "roi" not in st.session_state:
+            st.warning("Please select ROI first.")
+        elif "pixel_to_mm" not in st.session_state:
+            st.warning("Please enter real ROI width first.")
+        else:
+            st.session_state.running = True
+            st.session_state.paused = False
 
 with c2:
     if st.button("⏹ Stop Analysis"):
-        st.session_state.running=False
-        st.session_state.paused=False
+        st.session_state.running = False
+        st.session_state.paused = False
 
 def negative_mouse_view(frame):
-
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # invert background
     inv = cv2.bitwise_not(gray)
 
     # threshold tikus
-    _, mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+    _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
 
     # ubah background jadi BGR
     neg_frame = cv2.cvtColor(inv, cv2.COLOR_GRAY2BGR)
 
     # warnai tikus merah
-    neg_frame[mask>0] = [0,0,255]
+    neg_frame[mask > 0] = [0, 0, 255]
 
     return neg_frame
-    
+
 def detect_mouse(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
 
-    _,mask=cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+    coords = np.column_stack(np.where(mask > 0))
 
-    coords=np.column_stack(np.where(mask>0))
+    if len(coords) == 0:
+        return None, None
 
-    if len(coords)==0:
-        return None,None
+    y, x = coords.mean(axis=0)
 
-    y,x=coords.mean(axis=0)
-
-    return int(x),int(y)
-
+    return int(x), int(y)
 
 if uploaded_video and st.session_state.running:
-
-    tfile=tempfile.NamedTemporaryFile(delete=False)
-    tfile.write(uploaded_video.read())
-
     cap = cv2.VideoCapture(st.session_state.video_path)
 
-    total_frames=int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+
     if "roi" in st.session_state:
         width = st.session_state.roi[2]
         height = st.session_state.roi[3]
-    fps=cap.get(cv2.CAP_PROP_FPS)
 
-    X=[]
-    Y=[]
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    X = []
+    Y = []
 
     video_col1, video_col2 = st.columns(2)
 
@@ -213,23 +232,22 @@ if uploaded_video and st.session_state.running:
     with video_col2:
         st.markdown("**Tracking View**")
         neg_video = st.empty()
-    
-    progress=st.progress(0)
-    
+
+    progress = st.progress(0)
 
     st.markdown(
-    "<h2 style='text-align:center;'>Movement Analysis</h2>",
-    unsafe_allow_html=True
+        "<h2 style='text-align:center;'>Movement Analysis</h2>",
+        unsafe_allow_html=True
     )
-    col1,col2,col3=st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-    traj_plot=col1.empty()
-    dist_plot=col2.empty()
-    vel_plot=col3.empty()
-###
+    traj_plot = col1.empty()
+    dist_plot = col2.empty()
+    vel_plot = col3.empty()
+
     st.markdown(
-    "<h2 style='text-align:center;'>Spatial Behaviour</h2>",
-    unsafe_allow_html=True
+        "<h2 style='text-align:center;'>Spatial Behaviour</h2>",
+        unsafe_allow_html=True
     )
 
     spatial_col1, spatial_col2 = st.columns(2)
@@ -238,26 +256,50 @@ if uploaded_video and st.session_state.running:
     zone_plot = spatial_col2.empty()
 
     st.markdown(
-    "<h2 style='text-align:center;'>Directional Analysis</h2>",
-    unsafe_allow_html=True
+        "<h2 style='text-align:center;'>Directional Analysis</h2>",
+        unsafe_allow_html=True
     )
 
-    dir_col1,dir_col2 = st.columns(2)
+    dir_col1, dir_col2 = st.columns(2)
 
     bearing_plot = dir_col1.empty()
     turn_plot = dir_col2.empty()
 
-###
-    frame_id=0
-    saved_plots=[]
+    frame_id = 0
+    saved_plots = []
+
     st.markdown(
-    "<h2 style='text-align:center;'>Behavior Metrics</h2>",
-    unsafe_allow_html=True
+        "<h2 style='text-align:center;'>Behavior Metrics</h2>",
+        unsafe_allow_html=True
     )
     metrics_table = st.empty()
-#####
-    while True:
 
+    st.markdown("""
+    <style>
+    .metrics-table {
+        font-size:22px;
+        text-align:center;
+        margin:auto;
+        margin-top:5px;
+        margin-bottom:5px;
+        border-collapse:collapse;
+    }
+
+    .metrics-table th {
+        font-size:24px;
+        font-weight:bold;
+        text-align:center;
+        padding:8px;
+    }
+
+    .metrics-table td {
+        font-size:22px;
+        padding:8px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    while True:
         if not st.session_state.running:
             break
 
@@ -271,10 +313,8 @@ if uploaded_video and st.session_state.running:
             st.stop()
 
         x, y, w, h = st.session_state.roi
-
         fh, fw = frame.shape[:2]
 
-        # pastikan ROI tetap valid dan tidak keluar batas frame
         x = max(0, min(int(x), fw - 1))
         y = max(0, min(int(y), fh - 1))
         w = max(1, min(int(w), fw - x))
@@ -285,13 +325,12 @@ if uploaded_video and st.session_state.running:
             st.stop()
 
         frame = frame[y:y+h, x:x+w]
-    
-######
-        if frame_id % skip !=0:
-            frame_id+=1
+
+        if frame_id % skip != 0:
+            frame_id += 1
             continue
 
-        x,y=detect_mouse(frame)
+        x, y = detect_mouse(frame)
 
         if x is not None and y is not None:
             X.append(x)
@@ -303,205 +342,190 @@ if uploaded_video and st.session_state.running:
         neg_frame = negative_mouse_view(frame)
 
         if x is not None:
-            cv2.circle(frame,(x,y),6,(0,0,255),-1)
-            cv2.circle(neg_frame,(x,y),6,(255,0,0),-1)
+            cv2.circle(frame, (x, y), 6, (0, 0, 255), -1)
+            cv2.circle(neg_frame, (x, y), 6, (255, 0, 0), -1)
 
         raw_video.image(frame, channels="BGR")
         neg_video.image(neg_frame, channels="BGR")
 
-        track=pd.DataFrame({"X":X,"Y":Y})
+        track = pd.DataFrame({"X": X, "Y": Y})
 
-        track["Y"]=height-track["Y"]
+        track["Y"] = height - track["Y"]
 
-        track["Xs"]=track["X"].rolling(9,center=True).mean()
-        track["Ys"]=track["Y"].rolling(9,center=True).mean()
+        track["Xs"] = track["X"].rolling(9, center=True).mean()
+        track["Ys"] = track["Y"].rolling(9, center=True).mean()
 
         alpha = 0.2
-
         track["Xs"] = track["X"].ewm(alpha=alpha).mean()
         track["Ys"] = track["Y"].ewm(alpha=alpha).mean()
 
+        track["Xs"].fillna(track["X"], inplace=True)
+        track["Ys"].fillna(track["Y"], inplace=True)
 
-        track["Xs"].fillna(track["X"],inplace=True)
-        track["Ys"].fillna(track["Y"],inplace=True)
+        if len(track) > 2:
+            track["dx"] = track.Xs.diff()
+            track["dy"] = track.Ys.diff()
 
-        if len(track)>2:
+            track["step_distance"] = np.sqrt(track.dx**2 + track.dy**2)
 
-            track["dx"]=track.Xs.diff()
-            track["dy"]=track.Ys.diff()
+            # convert pixel to mm
+            if "pixel_to_mm" in st.session_state:
+                track["step_distance"] = track["step_distance"] * st.session_state.pixel_to_mm
 
-            track["step_distance"]=np.sqrt(track.dx**2+track.dy**2)
             movement_threshold = 0.3  # pixel
-
             track.loc[track["step_distance"] < movement_threshold, "Xs"] = np.nan
             track.loc[track["step_distance"] < movement_threshold, "Ys"] = np.nan
 
             track["Xs"].fillna(method="ffill", inplace=True)
             track["Ys"].fillna(method="ffill", inplace=True)
 
-            track["velocity"]=track["step_distance"]
+            dt = skip / fps
+            track["velocity"] = track["step_distance"] / dt
+            track["cumulative_distance"] = track.step_distance.fillna(0).cumsum()
 
-            track["cumulative_distance"]=track.step_distance.fillna(0).cumsum()
+            track["bearing"] = np.arctan2(track.dy, track.dx)
+            track["bearing_deg"] = np.degrees(track["bearing"])
 
-            track["bearing"]=np.arctan2(track.dy,track.dx)
-            track["bearing_deg"]=np.degrees(track["bearing"])
+            track["turn_angle"] = track["bearing_deg"].diff()
+            track["turn_angle"] = (track["turn_angle"] + 180) % 360 - 180
 
-            track["turn_angle"]=track["bearing_deg"].diff()
-            track["turn_angle"]=(track["turn_angle"]+180)%360-180
-
-            mean_velocity=track["velocity"].mean()
+            mean_velocity = track["velocity"].mean()
 
             # freezing
-            freezing_threshold=0.5
-            track["freezing"]=track["velocity"]<freezing_threshold
-            freezing_time=track["freezing"].sum()/fps
+            freezing_threshold = 0.5
+            track["freezing"] = track["velocity"] < freezing_threshold
+            freezing_time = track["freezing"].sum() * dt
 
             # zone analysis
-            cx=width/2
-            cy=height/2
-            center_radius=min(width,height)*0.25
+            cx = width / 2
+            cy = height / 2
+            center_radius = min(width, height) * 0.25
 
-            dist_center=np.sqrt((track.Xs-cx)**2+(track.Ys-cy)**2)
+            dist_center = np.sqrt((track.Xs - cx)**2 + (track.Ys - cy)**2)
+            track["zone"] = np.where(dist_center < center_radius, "center", "wall")
 
-            track["zone"]=np.where(dist_center<center_radius,"center","wall")
+            center_time = (track.zone == "center").sum() * dt
+            wall_time = (track.zone == "wall").sum() * dt
 
-            center_time=(track.zone=="center").sum()/fps
-            wall_time=(track.zone=="wall").sum()/fps
-
-            anxiety_index=wall_time/(center_time+wall_time)
+            anxiety_index = wall_time / (center_time + wall_time) if (center_time + wall_time) > 0 else np.nan
 
             # exploration
-            grid_size=5
-            xbins=np.linspace(track.Xs.min(),track.Xs.max(),grid_size)
-            ybins=np.linspace(track.Ys.min(),track.Ys.max(),grid_size)
+            grid_size = 5
+            xbins = np.linspace(track.Xs.min(), track.Xs.max(), grid_size)
+            ybins = np.linspace(track.Ys.min(), track.Ys.max(), grid_size)
 
-            grid_counts,_,_=np.histogram2d(track.Xs,track.Ys,bins=[xbins,ybins])
+            grid_counts, _, _ = np.histogram2d(track.Xs, track.Ys, bins=[xbins, ybins])
 
-            visited_cells=np.sum(grid_counts>0)
-            total_cells=(grid_size-1)*(grid_size-1)
+            visited_cells = np.sum(grid_counts > 0)
+            total_cells = (grid_size - 1) * (grid_size - 1)
+            exploration_index = visited_cells / total_cells if total_cells > 0 else np.nan
 
-            exploration_index=visited_cells/total_cells
+            total_distance = track["cumulative_distance"].iloc[-1]
+            total_time = len(track) * dt
 
-            total_distance=track["cumulative_distance"].iloc[-1]
-            total_time=len(track)/fps
-
-            if frame_id % 20==0:
-
-                fig1,ax1=plt.subplots()
-                ax1.plot(track.Xs,track.Ys,color="red")
+            if frame_id % 20 == 0:
+                fig1, ax1 = plt.subplots()
+                ax1.plot(track.Xs, track.Ys, color="red")
                 ax1.set_aspect("equal")
                 ax1.set_title("Trajectory")
                 traj_plot.pyplot(fig1)
                 plt.close(fig1)
 
-                fig2,ax2=plt.subplots()
+                fig2, ax2 = plt.subplots()
                 ax2.plot(track["cumulative_distance"])
-                ax2.set_title("Cumulative Distance")
+                ax2.set_title("Cumulative Distance (mm)")
                 dist_plot.pyplot(fig2)
                 plt.close(fig2)
 
-                fig3,ax3=plt.subplots()
+                fig3, ax3 = plt.subplots()
                 ax3.plot(track["velocity"])
-                ax3.set_title("Velocity")
+                ax3.set_title("Velocity (mm/s)")
                 vel_plot.pyplot(fig3)
                 plt.close(fig3)
 
                 # heatmap
-                if len(track)>20:
-                    fig4,ax4=plt.subplots()
-                    sns.kdeplot(x=track.Xs,y=track.Ys,fill=True,cmap="RdYlGn_r",ax=ax4)
+                if len(track) > 20:
+                    fig4, ax4 = plt.subplots()
+                    heat_data = track[["Xs", "Ys"]].dropna()
+
+                    if len(heat_data) > 20 and heat_data["Xs"].nunique() > 1 and heat_data["Ys"].nunique() > 1:
+                        try:
+                            sns.kdeplot(
+                                x=heat_data["Xs"],
+                                y=heat_data["Ys"],
+                                fill=True,
+                                cmap="RdYlGn_r",
+                                ax=ax4
+                            )
+                        except Exception:
+                            ax4.scatter(heat_data["Xs"], heat_data["Ys"], s=5)
+
                     ax4.set_aspect("equal")
                     ax4.set_title("Dwell Time Heatmap")
                     heat_plot.pyplot(fig4)
                     plt.close(fig4)
 
                 # absolute bearing
-                bins=np.linspace(-180,180,24)
+                bins = np.linspace(-180, 180, 24)
 
-                fig5=plt.figure(figsize=(4,4))
-                hist,_=np.histogram(track["bearing_deg"].dropna(),bins=bins)
-                theta=np.deg2rad((bins[:-1]+bins[1:])/2)
+                fig5 = plt.figure(figsize=(4, 4))
+                hist, _ = np.histogram(track["bearing_deg"].dropna(), bins=bins)
+                theta = np.deg2rad((bins[:-1] + bins[1:]) / 2)
 
-                ax5=fig5.add_subplot(111,polar=True)
-                ax5.bar(theta,hist,width=np.deg2rad(15))
+                ax5 = fig5.add_subplot(111, polar=True)
+                ax5.bar(theta, hist, width=np.deg2rad(15))
                 ax5.set_title("Absolute Bearing")
-
                 bearing_plot.pyplot(fig5)
                 plt.close(fig5)
 
                 # turn direction
-                fig6=plt.figure(figsize=(4,4))
-                hist,_=np.histogram(track["turn_angle"].dropna(),bins=bins)
-                theta=np.deg2rad((bins[:-1]+bins[1:])/2)
+                fig6 = plt.figure(figsize=(4, 4))
+                hist, _ = np.histogram(track["turn_angle"].dropna(), bins=bins)
+                theta = np.deg2rad((bins[:-1] + bins[1:]) / 2)
 
-                ax6=fig6.add_subplot(111,polar=True)
-                ax6.bar(theta,hist,width=np.deg2rad(15))
+                ax6 = fig6.add_subplot(111, polar=True)
+                ax6.bar(theta, hist, width=np.deg2rad(15))
                 ax6.set_title("Turn Direction")
-
                 turn_plot.pyplot(fig6)
                 plt.close(fig6)
 
                 # zone occupancy
-                fig7,ax7=plt.subplots()
-                zone_counts=track.zone.value_counts()
-                ax7.bar(zone_counts.index,zone_counts.values)
+                fig7, ax7 = plt.subplots()
+                zone_counts = track.zone.value_counts()
+                ax7.bar(zone_counts.index, zone_counts.values)
                 ax7.set_title("Zone Occupancy")
                 zone_plot.pyplot(fig7)
                 plt.close(fig7)
 
                 metrics_df = pd.DataFrame([{
-                    "Mean velocity (mm/s)": round(mean_velocity,2),
-                    "Anxiety index": round(anxiety_index,2),
-                    "Freezing time (s)": round(freezing_time,2),
-                    "Exploration index": round(exploration_index,2),
-                    "Total Distance (mm)": round(total_distance,2),
-                    "Total Time (s)": round(total_time,2)
+                    "Mean velocity (mm/s)": round(mean_velocity, 2) if pd.notna(mean_velocity) else np.nan,
+                    "Anxiety index": round(anxiety_index, 2) if pd.notna(anxiety_index) else np.nan,
+                    "Freezing time (s)": round(freezing_time, 2) if pd.notna(freezing_time) else np.nan,
+                    "Exploration index": round(exploration_index, 2) if pd.notna(exploration_index) else np.nan,
+                    "Total Distance (mm)": round(total_distance, 2) if pd.notna(total_distance) else np.nan,
+                    "Total Time (s)": round(total_time, 2) if pd.notna(total_time) else np.nan
                 }])
 
-
-                st.markdown("""
-                <style>
-                .metrics-table {
-                font-size:22px;
-                text-align:center;
-                margin:auto;
-                margin-top:5px;
-                margin-bottom:5px;
-                border-collapse:collapse;
-                }
-
-                .metrics-table th {
-                font-size:24px;
-                font-weight:bold;
-                text-align:center;
-                padding:8px;
-                }
-
-                .metrics-table td {
-                font-size:22px;
-                padding:8px;
-                }
-                </style>
-                """, unsafe_allow_html=True)
-               
                 metrics_table.markdown(
-                metrics_df.to_html(classes="metrics-table", index=False),
-                unsafe_allow_html=True
-                ) 
-        frame_id+=1
-        progress.progress(frame_id/total_frames)
+                    metrics_df.to_html(classes="metrics-table", index=False),
+                    unsafe_allow_html=True
+                )
+
+        frame_id += 1
+        progress.progress(frame_id / total_frames)
 
     cap.release()
     st.success("Analysis complete")
 
-    csv = track.to_csv(index=False)
+    if "track" in locals() and not track.empty:
+        csv = track.to_csv(index=False)
 
-    st.download_button(
-        label="Download Tracking Data (CSV)",
-        data=csv,
-        file_name="tracking_data.csv",
-        mime="text/csv"
-    )
+        st.download_button(
+            label="Download Tracking Data (CSV)",
+            data=csv,
+            file_name="tracking_data.csv",
+            mime="text/csv"
+        )
 
 st.markdown("---")
 
