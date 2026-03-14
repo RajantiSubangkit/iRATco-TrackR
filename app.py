@@ -461,10 +461,13 @@ if uploaded_video and st.session_state.running:
                     heat_data = track[["Xs", "Ys"]].dropna()
 
                     if len(heat_data) > 0:
+                    # setiap titik menyumbang waktu dt
                         dwell_weights = np.full(len(heat_data), dt)
 
-                        x_edges = np.linspace(0, width, 51)
-                        y_edges = np.linspace(0, height, 51)
+                    # resolusi heatmap
+                        n_bins = 60
+                        x_edges = np.linspace(0, width, n_bins + 1)
+                        y_edges = np.linspace(0, height, n_bins + 1)
 
                         heatmap, _, _ = np.histogram2d(
                             heat_data["Xs"],
@@ -473,16 +476,37 @@ if uploaded_video and st.session_state.running:
                             weights=dwell_weights
                         )
 
-                        fig4, ax4 = plt.subplots()
+                        # smooth supaya area dwell menyebar dan tidak cuma titik
+                        heatmap_smooth = cv2.GaussianBlur(heatmap, (0, 0), sigmaX=2.5, sigmaY=2.5)
+
+                        # custom colormap: putih -> hijau -> kuning -> merah
+                        from matplotlib.colors import LinearSegmentedColormap
+                        dwell_cmap = LinearSegmentedColormap.from_list(
+                            "dwell_cmap",
+                            ["#ffffff", "#00ff00", "#ffff00", "#ff0000"]
+                        )
+
+                        fig4, ax4 = plt.subplots(figsize=(6, 5))
+
                         im = ax4.imshow(
-                            heatmap.T,
+                            heatmap_smooth.T,
                             origin="lower",
                             extent=[0, width, 0, height],
                             aspect="equal",
-                            cmap="RdYlGn_r"
+                            cmap=dwell_cmap,
+                            interpolation="bilinear"
                         )
-                        ax4.set_title("Dwell Time Heatmap (s)")
-                        fig4.colorbar(im, ax=ax4, label="Time spent (s)")
+
+                        # overlay trajectory
+                        ax4.plot(track["Xs"], track["Ys"], color="black", alpha=0.35, linewidth=1)
+
+                        ax4.set_title("Movement Trajectory")
+                        ax4.set_xlabel("X")
+                        ax4.set_ylabel("Y")
+
+                        cbar = fig4.colorbar(im, ax=ax4, shrink=0.8)
+                        cbar.set_label("Dwell Time Level")
+
                         heat_plot.pyplot(fig4)
                         plt.close(fig4)
 
