@@ -63,7 +63,7 @@ if uploaded_video:
     cap = cv2.VideoCapture(st.session_state.video_path)
     ret, frame = cap.read()
     cap.release()
-    display_width = 700
+    display_width = 500
     scale = display_width / frame.shape[1]
     display_height = int(frame.shape[0] * scale)
 
