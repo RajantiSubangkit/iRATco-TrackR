@@ -467,6 +467,9 @@ if uploaded_video and st.session_state.running:
 
                     ax1.plot(track["Xs"], track["Ys"], color="black", alpha=0.35, linewidth=1)
 
+                    cbar1 = fig1.colorbar(im1, ax=ax1, shrink=0.8)
+                    cbar1.set_label("Dwell Time (s)")
+
                 ax1.set_title("Movement Trajectory")
                 ax1.set_xlabel("X")
                 ax1.set_ylabel("Y")
