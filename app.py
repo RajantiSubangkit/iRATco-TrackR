@@ -9,6 +9,7 @@ import tempfile
 import zipfile
 import io
 import time
+from matplotlib.colors import LinearSegmentedColormap
 
 # PAGE CONFIG
 st.set_page_config(
@@ -47,7 +48,6 @@ if uploaded_video is not None:
                 del st.session_state[key]
 
 ##### selector
-# ROI selection
 roi = None
 
 if uploaded_video:
@@ -111,9 +111,7 @@ if uploaded_video:
             st.session_state.roi = (x, y, w, h)
             st.rerun()
 
-        # =========================
         # Calibration input
-        # =========================
         if "roi" in st.session_state:
             x, y, w, h = st.session_state.roi
 
@@ -138,7 +136,6 @@ if uploaded_video:
                 st.session_state.pixel_to_mm = real_roi_width_mm / w
                 st.write(f"Scale: {st.session_state.pixel_to_mm:.4f} mm/pixel")
 
-######
 analysis_speed = st.selectbox(
     "Analysis Speed",
     ["1X", "2X", "4X", "8X", "20X"]
@@ -186,19 +183,14 @@ with c2:
 def negative_mouse_view(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    # invert background
     inv = cv2.bitwise_not(gray)
 
-    # threshold sesuai tipe objek
     if contrast_mode == "Bright object":
         _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
     else:
         _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
 
-    # ubah background jadi BGR
     neg_frame = cv2.cvtColor(inv, cv2.COLOR_GRAY2BGR)
-
-    # warnai objek merah
     neg_frame[mask > 0] = [0, 0, 255]
 
     return neg_frame
@@ -217,7 +209,6 @@ def detect_mouse(frame):
         return None, None
 
     y, x = coords.mean(axis=0)
-
     return int(x), int(y)
 
 if uploaded_video and st.session_state.running:
@@ -376,12 +367,11 @@ if uploaded_video and st.session_state.running:
         track["Ys"].fillna(track["Y"], inplace=True)
 
         if len(track) > 2:
-            track["dx"] = track.Xs.diff()
-            track["dy"] = track.Ys.diff()
+            track["dx"] = track["Xs"].diff()
+            track["dy"] = track["Ys"].diff()
 
-            track["step_distance"] = np.sqrt(track.dx**2 + track.dy**2)
+            track["step_distance"] = np.sqrt(track["dx"]**2 + track["dy"]**2)
 
-            # convert pixel to mm
             if "pixel_to_mm" in st.session_state:
                 track["step_distance"] = track["step_distance"] * st.session_state.pixel_to_mm
 
@@ -394,9 +384,9 @@ if uploaded_video and st.session_state.running:
 
             dt = skip / fps
             track["velocity"] = track["step_distance"] / dt
-            track["cumulative_distance"] = track.step_distance.fillna(0).cumsum()
+            track["cumulative_distance"] = track["step_distance"].fillna(0).cumsum()
 
-            track["bearing"] = np.arctan2(track.dy, track.dx)
+            track["bearing"] = np.arctan2(track["dy"], track["dx"])
             track["bearing_deg"] = np.degrees(track["bearing"])
 
             track["turn_angle"] = track["bearing_deg"].diff()
@@ -414,48 +404,72 @@ if uploaded_video and st.session_state.running:
             cy = height / 2
             center_radius = min(width, height) * 0.25
 
-            dist_center = np.sqrt((track.Xs - cx)**2 + (track.Ys - cy)**2)
+            dist_center = np.sqrt((track["Xs"] - cx)**2 + (track["Ys"] - cy)**2)
             track["zone"] = np.where(dist_center < center_radius, "center", "wall")
 
-            center_time = (track.zone == "center").sum() * dt
-            wall_time = (track.zone == "wall").sum() * dt
+            center_time = (track["zone"] == "center").sum() * dt
+            wall_time = (track["zone"] == "wall").sum() * dt
 
             anxiety_index = wall_time / (center_time + wall_time) if (center_time + wall_time) > 0 else np.nan
 
             # exploration
             grid_size = 5
-            xbins = np.linspace(track.Xs.min(), track.Xs.max(), grid_size)
-            ybins = np.linspace(track.Ys.min(), track.Ys.max(), grid_size)
+            x_valid = track["Xs"].dropna()
+            y_valid = track["Ys"].dropna()
 
-            grid_counts, _, _ = np.histogram2d(track.Xs, track.Ys, bins=[xbins, ybins])
-
-            visited_cells = np.sum(grid_counts > 0)
-            total_cells = (grid_size - 1) * (grid_size - 1)
-            exploration_index = visited_cells / total_cells if total_cells > 0 else np.nan
+            if len(x_valid) > 1 and len(y_valid) > 1:
+                xbins = np.linspace(x_valid.min(), x_valid.max(), grid_size)
+                ybins = np.linspace(y_valid.min(), y_valid.max(), grid_size)
+                grid_counts, _, _ = np.histogram2d(x_valid, y_valid, bins=[xbins, ybins])
+                visited_cells = np.sum(grid_counts > 0)
+                total_cells = (grid_size - 1) * (grid_size - 1)
+                exploration_index = visited_cells / total_cells if total_cells > 0 else np.nan
+            else:
+                exploration_index = np.nan
 
             total_distance = track["cumulative_distance"].iloc[-1]
             total_time = len(track) * dt
 
             if frame_id % 20 == 0:
-                # Movement Trajectory = frequency visit heatmap seperti semula
-                fig1, ax1 = plt.subplots()
+                # Movement Trajectory = dwell time movement trajectory
+                fig1, ax1 = plt.subplots(figsize=(6, 5))
                 traj_data = track[["Xs", "Ys"]].dropna()
 
-                if len(traj_data) > 20 and traj_data["Xs"].nunique() > 1 and traj_data["Ys"].nunique() > 1:
-                    try:
-                        sns.kdeplot(
-                            x=traj_data["Xs"],
-                            y=traj_data["Ys"],
-                            fill=True,
-                            cmap="RdYlGn_r",
-                            ax=ax1
-                        )
-                    except Exception:
-                        ax1.scatter(traj_data["Xs"], traj_data["Ys"], s=5, color="red")
+                if len(traj_data) > 0:
+                    dwell_weights = np.full(len(traj_data), dt)
 
-                ax1.plot(track["Xs"], track["Ys"], color="black", alpha=0.35, linewidth=1)
-                ax1.set_aspect("equal")
+                    n_bins = 60
+                    x_edges = np.linspace(0, width, n_bins + 1)
+                    y_edges = np.linspace(0, height, n_bins + 1)
+
+                    heatmap, _, _ = np.histogram2d(
+                        traj_data["Xs"],
+                        traj_data["Ys"],
+                        bins=[x_edges, y_edges],
+                        weights=dwell_weights
+                    )
+
+                    heatmap_smooth = cv2.GaussianBlur(heatmap, (0, 0), sigmaX=2.5, sigmaY=2.5)
+
+                    dwell_cmap = LinearSegmentedColormap.from_list(
+                        "dwell_cmap",
+                        ["#ffffff", "#00ff00", "#ffff00", "#ff0000"]
+                    )
+
+                    im1 = ax1.imshow(
+                        heatmap_smooth.T,
+                        origin="lower",
+                        extent=[0, width, 0, height],
+                        aspect="equal",
+                        cmap=dwell_cmap,
+                        interpolation="bilinear"
+                    )
+
+                    ax1.plot(track["Xs"], track["Ys"], color="black", alpha=0.35, linewidth=1)
+
                 ax1.set_title("Movement Trajectory")
+                ax1.set_xlabel("X")
+                ax1.set_ylabel("Y")
                 traj_plot.pyplot(fig1)
                 plt.close(fig1)
 
@@ -471,53 +485,27 @@ if uploaded_video and st.session_state.running:
                 vel_plot.pyplot(fig3)
                 plt.close(fig3)
 
-                # Dwell Time Movement Trajectory
+                # Visit Frequency Heatmap (tanpa trajectory)
                 if len(track) > 20:
+                    fig4, ax4 = plt.subplots()
                     heat_data = track[["Xs", "Ys"]].dropna()
 
-                    if len(heat_data) > 0:
-                        dwell_weights = np.full(len(heat_data), dt)
+                    if len(heat_data) > 20 and heat_data["Xs"].nunique() > 1 and heat_data["Ys"].nunique() > 1:
+                        try:
+                            sns.kdeplot(
+                                x=heat_data["Xs"],
+                                y=heat_data["Ys"],
+                                fill=True,
+                                cmap="RdYlGn_r",
+                                ax=ax4
+                            )
+                        except Exception:
+                            ax4.scatter(heat_data["Xs"], heat_data["Ys"], s=5, color="red")
 
-                        n_bins = 60
-                        x_edges = np.linspace(0, width, n_bins + 1)
-                        y_edges = np.linspace(0, height, n_bins + 1)
-
-                        heatmap, _, _ = np.histogram2d(
-                            heat_data["Xs"],
-                            heat_data["Ys"],
-                            bins=[x_edges, y_edges],
-                            weights=dwell_weights
-                        )
-
-                        heatmap_smooth = cv2.GaussianBlur(heatmap, (0, 0), sigmaX=2.5, sigmaY=2.5)
-
-                        from matplotlib.colors import LinearSegmentedColormap
-                        dwell_cmap = LinearSegmentedColormap.from_list(
-                            "dwell_cmap",
-                            ["#ffffff", "#00ff00", "#ffff00", "#ff0000"]
-                        )
-
-                        fig4, ax4 = plt.subplots(figsize=(6, 5))
-
-                        im = ax4.imshow(
-                            heatmap_smooth.T,
-                            origin="lower",
-                            extent=[0, width, 0, height],
-                            aspect="equal",
-                            cmap=dwell_cmap,
-                            interpolation="bilinear"
-                        )
-
-                        ax4.plot(track["Xs"], track["Ys"], color="black", alpha=0.35, linewidth=1)
-                        ax4.set_title("Dwell Time Movement Trajectory")
-                        ax4.set_xlabel("X")
-                        ax4.set_ylabel("Y")
-
-                        cbar = fig4.colorbar(im, ax=ax4, shrink=0.8)
-                        cbar.set_label("Dwell Time Level")
-
-                        heat_plot.pyplot(fig4)
-                        plt.close(fig4)
+                    ax4.set_aspect("equal")
+                    ax4.set_title("Visit Frequency Heatmap")
+                    heat_plot.pyplot(fig4)
+                    plt.close(fig4)
 
                 # absolute bearing
                 bins = np.linspace(-180, 180, 24)
@@ -545,7 +533,7 @@ if uploaded_video and st.session_state.running:
 
                 # zone occupancy
                 fig7, ax7 = plt.subplots()
-                zone_counts = track.zone.value_counts()
+                zone_counts = track["zone"].value_counts()
                 ax7.bar(zone_counts.index, zone_counts.values)
                 ax7.set_title("Zone Occupancy")
                 zone_plot.pyplot(fig7)
