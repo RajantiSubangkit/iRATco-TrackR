@@ -506,7 +506,7 @@ if uploaded_video and st.session_state.running:
 
                             if ax4.collections:
                                 cbar4 = fig4.colorbar(ax4.collections[0], ax=ax4, shrink=0.8)
-                                cbar4.set_label("Visit Frequency")
+                                cbar4.set_label("Relative Visit Freq.")
                         except Exception:
                             ax4.scatter(heat_data["Xs"], heat_data["Ys"], s=5, color="red")
 
