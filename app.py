@@ -255,19 +255,38 @@ if uploaded_video and st.session_state.running:
     unsafe_allow_html=True
     )
     metrics_table = st.empty()
+#####
     while True:
 
-        if not st.session_state.running:
-            break
+    if not st.session_state.running:
+        break
 
-        ret,frame=cap.read()
-        if "roi" in st.session_state:
-            x,y,w,h = st.session_state.roi
-            frame = frame[y:y+h , x:x+w]
+    ret, frame = cap.read()
 
-        if not ret:
-            break
+    if not ret or frame is None:
+        break
 
+    if "roi" not in st.session_state:
+        st.error("Please select ROI first.")
+        st.stop()
+
+    x, y, w, h = st.session_state.roi
+
+    fh, fw = frame.shape[:2]
+
+    # pastikan ROI tetap valid dan tidak keluar batas frame
+    x = max(0, min(int(x), fw - 1))
+    y = max(0, min(int(y), fh - 1))
+    w = max(1, min(int(w), fw - x))
+    h = max(1, min(int(h), fh - y))
+
+    if w <= 0 or h <= 0:
+        st.error("ROI is invalid.")
+        st.stop()
+
+    frame = frame[y:y+h, x:x+w]
+    
+######
         if frame_id % skip !=0:
             frame_id+=1
             continue
