@@ -484,6 +484,7 @@ if uploaded_video and st.session_state.running:
 
                 fig3, ax3 = plt.subplots()
                 ax3.plot(track["velocity"])
+                ax3.axhline(mean_velocity, color="red", linestyle="--", linewidth=1.5)
                 ax3.set_title("Velocity (mm/s)")
                 vel_plot.pyplot(fig3)
                 plt.close(fig3)
@@ -495,13 +496,17 @@ if uploaded_video and st.session_state.running:
 
                     if len(heat_data) > 20 and heat_data["Xs"].nunique() > 1 and heat_data["Ys"].nunique() > 1:
                         try:
-                            sns.kdeplot(
+                            kde = sns.kdeplot(
                                 x=heat_data["Xs"],
                                 y=heat_data["Ys"],
                                 fill=True,
                                 cmap="RdYlGn_r",
                                 ax=ax4
                             )
+
+                            if ax4.collections:
+                                cbar4 = fig4.colorbar(ax4.collections[0], ax=ax4, shrink=0.8)
+                                cbar4.set_label("Visit Frequency")
                         except Exception:
                             ax4.scatter(heat_data["Xs"], heat_data["Ys"], s=5, color="red")
 
